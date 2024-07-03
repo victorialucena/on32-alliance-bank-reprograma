@@ -6,7 +6,7 @@ import { Gerente } from './model/modelGerente';
 export class GerenteController {
   constructor(private readonly gerenteService: GerenteService) {}
 
-  @Post()
+  @Post('criar')
   createGerente(
     @Body('nome') nome: string,
   ) {

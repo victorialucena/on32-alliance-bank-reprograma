@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Param, Patch } from '@nestjs/common';
+import { Controller, Post, Body, Param, Patch, Get } from '@nestjs/common';
 import { ClienteService } from './cliente.service';
 import { ContaPoupanca } from '../conta/models/modelContaPoupanca';
 import { ContaCorrente } from '../conta/models/modelContaCorrente';
@@ -7,7 +7,7 @@ import { ContaCorrente } from '../conta/models/modelContaCorrente';
 export class ClienteController {
   constructor(private readonly clienteService: ClienteService) {}
 
-  @Post()
+  @Post('criar')
   createCliente(
     @Body('name') name: string,
     @Body('address') address: string,
@@ -20,6 +20,15 @@ export class ClienteController {
       message: 'Cliente criado com sucesso.',
       data: newCliente,
     };
+  }
+
+  @Get('list')
+    GetAllClientes() {
+      const clientes = this.clienteService.getAllClientes()
+      return{
+        message: 'todos os clientes',
+        data: clientes
+      }
   }
 
   @Patch(':clienteId/conta')

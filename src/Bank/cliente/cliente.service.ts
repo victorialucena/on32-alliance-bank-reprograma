@@ -15,6 +15,10 @@ export class ClienteService {
     return newCliente;
   }
 
+  getAllClientes(): Cliente[] {
+    return this.clientes
+  }
+
   findClienteById(id: string): Cliente | undefined {
     return this.clientes.find(cliente => cliente.id === id);
   }

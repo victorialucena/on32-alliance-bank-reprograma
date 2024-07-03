@@ -8,7 +8,7 @@ import { BadRequestException } from '@nestjs/common';
 export class ContaController {
   constructor(private readonly contaService: ContaService) {}
 
-  @Post(':tipo')
+  @Post('criar')
   createConta(
     @Param('tipo') tipo: 'CORRENTE' | 'POUPANCA',
     @Body() body: { numeroConta: string; cliente: Cliente; taxaDeJuros?: number },
