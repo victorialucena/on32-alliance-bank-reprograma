@@ -13,7 +13,7 @@ export class ClienteController {
     @Body('address') address: string,
     @Body('phone') phone: string,
     @Body('salaryIncome') salaryIncome: number,
-    @Body('gerente') gerente: any, // Supondo que o gerente seja passado no corpo da requisição
+    @Body('gerente') gerente: any,
   ) {
     const newCliente = this.clienteService.createCliente(name, address, phone, salaryIncome, gerente);
     return {
