@@ -1,52 +1,56 @@
-import { Controller, Post, Body, Get, Param } from '@nestjs/common';
+import { Controller, Post, Body, Param, Patch } from '@nestjs/common';
 import { ClienteService } from './cliente.service';
-import { HttpStatus } from '@nestjs/common';
+import { ContaPoupanca } from '../conta/models/modelContaPoupanca';
+import { ContaCorrente } from '../conta/models/modelContaCorrente';
 
-@Controller('cliente')
+@Controller('clientes')
 export class ClienteController {
- constructor(private readonly clienteService: ClienteService) { }
+  constructor(private readonly clienteService: ClienteService) {}
 
- @Post()
- createCliente(
-  @Body() body: { nome: string; endereco: string; telefone: string; rendaSalarial: number },
- ) {
-  const cliente = this.clienteService.createCliente(
-   body.nome,
-   body.endereco,
-   body.telefone,
-   body.rendaSalarial,
-  );
-  return {
-   statusCode: HttpStatus.CREATED,
-   message: 'Cliente criado com sucesso',
-   data: cliente,
-  };
- }
-
- @Get()
- findAllClientes() {
-  const clientes = this.clienteService.findAllClientes();
-  return {
-   statusCode: HttpStatus.OK,
-   message: 'Todos os clientes retornados com sucesso',
-   data: clientes,
-  };
- }
-
- @Get(':id')
- findClienteById(@Param('id') id: string) {
-  const cliente = this.clienteService.findClienteById(id);
-  if (!cliente) {
-   return {
-    statusCode: HttpStatus.NOT_FOUND,
-    message: `Cliente com ID ${id} não encontrado`,
-   };
+  @Post()
+  createCliente(
+    @Body('name') name: string,
+    @Body('address') address: string,
+    @Body('phone') phone: string,
+    @Body('salaryIncome') salaryIncome: number,
+    @Body('gerente') gerente: any, // Supondo que o gerente seja passado no corpo da requisição
+  ) {
+    const newCliente = this.clienteService.createCliente(name, address, phone, salaryIncome, gerente);
+    return {
+      message: 'Cliente criado com sucesso.',
+      data: newCliente,
+    };
   }
-  return {
-   statusCode: HttpStatus.OK,
-   message: 'Cliente retornado com sucesso',
-   data: cliente,
-  };
- }
 
+  @Patch(':clienteId/conta')
+  abrirConta(
+    @Param('clienteId') clienteId: string,
+    @Body('tipoConta') tipoConta: string,
+  ): ContaCorrente | ContaPoupanca | null {
+    const conta = this.clienteService.abrirConta(clienteId, tipoConta);
+    return conta;
+  }
+
+  @Patch(':clienteId/conta/:contaId')
+  fecharConta(
+    @Param('clienteId') clienteId: string,
+    @Param('contaId') contaId: string,
+  ) {
+    this.clienteService.fecharConta(clienteId, contaId);
+    return {
+      message: 'Conta fechada com sucesso.',
+    };
+  }
+
+  @Patch(':clienteId/conta/:contaId/tipo')
+  mudarTipoConta(
+    @Param('clienteId') clienteId: string,
+    @Param('contaId') contaId: string,
+    @Body('novoTipo') novoTipo: string,
+  ) {
+    this.clienteService.mudarTipoConta(clienteId, contaId, novoTipo);
+    return {
+      message: `Tipo da conta alterado para ${novoTipo}.`,
+    };
+  }
 }

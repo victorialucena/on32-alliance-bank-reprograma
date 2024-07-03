@@ -1,39 +1,43 @@
 import { Injectable } from '@nestjs/common';
-import { Gerente } from '../models/modelGerente';
-import { Cliente } from '../models/modelCliente';
+import { Gerente } from './model/modelGerente';
+import { ClienteService } from '../cliente/cliente.service'; 
 
 @Injectable()
 export class GerenteService {
+  private gerentes: Gerente[] = [];
 
- private gerentes: Gerente[] = [];
+  constructor(private readonly clienteService: ClienteService) {} 
 
- createGerente(nome: string, clientes: Cliente[]): Gerente {
-  const newGerente = new Gerente(nome, clientes);
-  this.gerentes.push(newGerente);
-  return newGerente;
- }
-
- findAllGerentes(): Gerente[] {
-  return this.gerentes;
- }
-
- findGerenteById(id: string): Gerente {
-  return this.gerentes.find(gerente => gerente.id === id);
- }
-
- addCliente(gerenteId: string, cliente: Cliente): Gerente {
-  const gerente = this.findGerenteById(gerenteId);
-  if (gerente) {
-   gerente.clientes.push(cliente);
+  createGerente(nome: string): Gerente {
+    const newGerente = new Gerente(nome, []);
+    this.gerentes.push(newGerente);
+    return newGerente;
   }
-  return gerente;
- }
 
- removeCliente(gerenteId: string, clienteId: string): Gerente {
-  const gerente = this.findGerenteById(gerenteId);
-  if (gerente) {
-   gerente.clientes = gerente.clientes.filter(cliente => cliente.id !== clienteId);
+  findGerenteById(id: string): Gerente | undefined {
+    return this.gerentes.find(gerente => gerente.id === id);
   }
-  return gerente;
- }
+
+  associateCliente(gerenteId: string, clienteId: string): void {
+    const gerente = this.findGerenteById(gerenteId);
+    if (!gerente) {
+      throw new Error(`Gerente com ID ${gerenteId} não encontrado.`);
+    }
+
+    const cliente = this.clienteService.findClienteById(clienteId); 
+    if (!cliente) {
+      throw new Error(`Cliente com ID ${clienteId} não encontrado.`);
+    }
+
+    gerente.clientes.push(cliente);
+  }
+
+  removeCliente(gerenteId: string, clienteId: string): void {
+    const gerente = this.findGerenteById(gerenteId);
+    if (!gerente) {
+      throw new Error(`Gerente com ID ${gerenteId} não encontrado.`);
+    }
+
+    gerente.clientes = gerente.clientes.filter(cliente => cliente.id !== clienteId);
+  }
 }

@@ -1,42 +1,54 @@
-import { Injectable } from '@nestjs/common';
-import { Conta } from '../models/modelConta';
-import { Cliente } from '../models/modelCliente';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { ContaCorrente } from './models/modelContaCorrente';
+import { ContaPoupanca } from './models/modelContaPoupanca';
+import { Cliente } from '../cliente/model/modelCliente';
 
 @Injectable()
-export class ContaService   {
- private contas: Conta[] = [];
+export class ContaService {
+  private contas: (ContaCorrente | ContaPoupanca)[] = [];
 
- createConta(type: string, numeroConta: string, cliente: Cliente): Conta {
-   const newConta = new Conta(type, numeroConta, cliente);
-   this.contas.push(newConta);
-   return newConta;
- }
+  createContaCorrente(numeroConta: string, cliente: Cliente): ContaCorrente | null {
+    if (cliente.salaryIncome >= 500) {
+      const newConta = new ContaCorrente(numeroConta, 0, cliente); // saldo inicial zero
+      this.contas.push(newConta);
+      return newConta;
+    } else {
+      throw new BadRequestException('O cliente não atende aos requisitos mínimos para abrir uma conta corrente.');
+    }
+  }
 
- depositar(conta: Conta, valor: number): void {
-   conta.saldo += valor;
- }
+  createContaPoupanca(numeroConta: string, cliente: Cliente, taxaDeJuros: number): ContaPoupanca | null {
+    const newConta = new ContaPoupanca(numeroConta, 0, cliente, taxaDeJuros); // saldo inicial zero
+    this.contas.push(newConta);
+    return newConta;
+  }
 
- sacar(conta: Conta, valor: number): boolean {
-   if (valor <= conta.saldo) {
-     conta.saldo -= valor;
-     return true;
-   }
-   return false;
- }
+  depositar(conta: ContaCorrente | ContaPoupanca, valor: number): void {
+    conta.depositar(valor);
+  }
 
- transferir(contaOrigem: Conta, valor: number, contaDestino: Conta): boolean {
-   if (this.sacar(contaOrigem, valor)) {
-     this.depositar(contaDestino, valor);
-     return true;
-   }
-   return false;
- }
+  sacar(conta: ContaCorrente | ContaPoupanca, valor: number): boolean {
+    if (valor <= conta.saldo) {
+      conta.saldo -= valor;
+      return true; 
+    }
+    return false; 
+  }
+  
 
- findContaByNumero(numeroConta: string): Conta {
-   return this.contas.find(conta => conta.numeroConta === numeroConta);
- }
+  transferir(contaOrigem: ContaCorrente | ContaPoupanca, valor: number, contaDestino: ContaCorrente | ContaPoupanca): boolean {
+    if (this.sacar(contaOrigem, valor)) {
+      this.depositar(contaDestino, valor);
+      return true;
+    }
+    return false;
+  }
 
- findAllContas(): Conta[] {
-   return this.contas;
- }
+  findContaByNumero(numeroConta: string): ContaCorrente | ContaPoupanca | undefined {
+    return this.contas.find(conta => conta.numeroConta === numeroConta);
+  }
+
+  findAllContas(): (ContaCorrente | ContaPoupanca)[] {
+    return this.contas;
+  }
 }

@@ -1,89 +1,60 @@
-import { Controller, Post, Body, Get, Param, Put, Delete } from '@nestjs/common';
+import { Controller, Post, Body, Param, Patch, Get } from '@nestjs/common';
 import { GerenteService } from './gerente.service';
-import { Cliente } from '../models/modelCliente';
-import { HttpStatus } from '@nestjs/common';
+import { Gerente } from './model/modelGerente';
 
-@Controller('gerente')
+@Controller('gerentes')
 export class GerenteController {
+  constructor(private readonly gerenteService: GerenteService) {}
 
- constructor(private readonly gerenteService: GerenteService) { }
-
- @Post()
- createGerente(
-  @Body() body: { nome: string; clientes: Cliente[] },
- ) {
-  const gerente = this.gerenteService.createGerente(
-   body.nome,
-   body.clientes,
-  );
-  return {
-   statusCode: HttpStatus.CREATED,
-   message: 'Gerente criado com sucesso',
-   data: gerente,
-  };
- }
-
- @Get()
- findAllGerentes() {
-  const gerentes = this.gerenteService.findAllGerentes();
-  return {
-   statusCode: HttpStatus.OK,
-   message: 'Todos os gerentes retornados com sucesso',
-   data: gerentes,
-  };
- }
-
- @Get(':id')
- findGerenteById(@Param('id') id: string) {
-  const gerente = this.gerenteService.findGerenteById(id);
-  if (!gerente) {
-   return {
-    statusCode: HttpStatus.NOT_FOUND,
-    message: `Gerente com ID ${id} não encontrado`,
-   };
+  @Post()
+  createGerente(
+    @Body('nome') nome: string,
+  ) {
+    const newGerente = this.gerenteService.createGerente(nome);
+    return {
+      message: 'Gerente criado com sucesso.',
+      data: newGerente,
+    };
   }
-  return {
-   statusCode: HttpStatus.OK,
-   message: 'Gerente retornado com sucesso',
-   data: gerente,
-  };
- }
 
- @Put(':id/clientes')
- addCliente(
-  @Param('id') gerenteId: string,
-  @Body() body: { cliente: Cliente },
- ) {
-  const gerente = this.gerenteService.addCliente(gerenteId, body.cliente);
-  if (!gerente) {
-   return {
-    statusCode: HttpStatus.NOT_FOUND,
-    message: `Gerente com ID ${gerenteId} não encontrado`,
-   };
+  @Get(':gerenteId')
+  getGerenteById(
+    @Param('gerenteId') gerenteId: string,
+  ): Gerente {
+    const gerente = this.gerenteService.findGerenteById(gerenteId);
+    if (!gerente) {
+      throw new Error(`Gerente com ID ${gerenteId} não encontrado.`);
+    }
+    return gerente;
   }
-  return {
-   statusCode: HttpStatus.OK,
-   message: 'Cliente adicionado ao gerente com sucesso',
-   data: gerente,
-  };
- }
 
- @Delete(':id/clientes/:clienteId')
- removeCliente(
-  @Param('id') gerenteId: string,
-  @Param('clienteId') clienteId: string,
- ) {
-  const gerente = this.gerenteService.removeCliente(gerenteId, clienteId);
-  if (!gerente) {
-   return {
-    statusCode: HttpStatus.NOT_FOUND,
-    message: `Gerente com ID ${gerenteId} não encontrado`,
-   };
+  @Patch(':gerenteId/cliente')
+  associateCliente(
+    @Param('gerenteId') gerenteId: string,
+    @Body() body: { clienteId: string },
+  ) {
+    const gerente = this.gerenteService.findGerenteById(gerenteId);
+    if (!gerente) {
+      throw new Error(`Gerente com ID ${gerenteId} não encontrado.`);
+    }
+
+    const { clienteId } = body;
+
+    this.gerenteService.associateCliente(gerenteId, clienteId);
+
+    return {
+      message: `Cliente com ID ${clienteId} associado ao gerente ${gerenteId} com sucesso.`,
+    };
   }
-  return {
-   statusCode: HttpStatus.OK,
-   message: 'Cliente removido do gerente com sucesso',
-   data: gerente,
-  };
- }
+
+  @Patch(':gerenteId/cliente/:clienteId/remover')
+  removeCliente(
+    @Param('gerenteId') gerenteId: string,
+    @Param('clienteId') clienteId: string,
+  ) {
+    this.gerenteService.removeCliente(gerenteId, clienteId);
+    return {
+      message: `Cliente com ID ${clienteId} removido do gerente ${gerenteId} com sucesso.`,
+    };
+  }
 }
