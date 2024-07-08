@@ -1,21 +1,27 @@
 import { v4 as uuidv4 } from "uuid";
 import { Cliente } from "src/models/modelCliente";
-import { Conta } from "src/models/modelConta";
+import { ClienteDTO } from "src/models/modelCliente";
 
 export class Gerente {
   id: string;
   nome: string;
   clientes: Cliente[];
 
-
-  constructor(nome: string, clientes: Cliente[]) {
+  constructor(nome: string, clientes: Cliente[] = []) {
     this.id = uuidv4();
     this.nome = nome;
-    this.clientes = clientes
+    this.clientes = clientes;
   }
+}
 
+export class GerenteDTO {
+  id: string;
+  nome: string;
+  clientes: ClienteDTO[];
 
-  abrirConta(conta: Conta): void { }
-  fecharConta(contaId: string): void { }
-  mudarTipoConta(contaId: string, novoTipo: string): void { }
+  constructor(gerente: Gerente) {
+    this.id = gerente.id;
+    this.nome = gerente.nome;
+    this.clientes = gerente.clientes.map(cliente => new ClienteDTO(cliente));
+  }
 }

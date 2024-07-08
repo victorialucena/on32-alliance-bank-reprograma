@@ -1,5 +1,6 @@
 import { Cliente } from "./modelCliente";
 import { v4 as uuidv4 } from "uuid";
+import { ClienteDTO } from "./modelCliente";
 
 
 export class Conta {
@@ -16,10 +17,20 @@ export class Conta {
     this.saldo = saldo;
     this.client = client;
   }
+}
 
-  depositar(valor: number): void { }
+export class ContaDTO {
+  id: string;
+  tipo: 'CORRENTE' | 'POUPANCA';
+  numeroConta: string;
+  saldo: number;
+  client: ClienteDTO;
 
-  sacar(valor: number): void { }
-
-  transferir(valor: number, paraConta: Conta): void { }
+  constructor(conta: Conta) {
+    this.id = conta.id;
+    this.tipo = conta.tipo;
+    this.numeroConta = conta.numeroConta;
+    this.saldo = conta.saldo;
+    this.client = new ClienteDTO(conta.client);
+  }
 }
