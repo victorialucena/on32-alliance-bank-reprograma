@@ -1,5 +1,5 @@
 import { Conta } from "./modelConta";
-import { Cliente } from "../../cliente/model/modelCliente";
+import { Cliente } from "./modelCliente";
 
 export class ContaPoupanca extends Conta {
   taxaDeJuros: number;

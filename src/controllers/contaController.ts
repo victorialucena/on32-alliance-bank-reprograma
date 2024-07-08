@@ -1,12 +1,12 @@
 import { Controller, Post, Body, Get, Patch, Param } from '@nestjs/common';
-import { Cliente } from '../cliente/model/modelCliente';
+import { Cliente } from '../models/modelCliente';
 import { HttpStatus } from '@nestjs/common';
-import { ContaService } from './conta.service';
+import { ContaService } from '../services/contaService';
 import { BadRequestException } from '@nestjs/common';
 
 @Controller('contas')
 export class ContaController {
-  constructor(private readonly contaService: ContaService) {}
+  constructor(private readonly contaService: ContaService) { }
 
   @Post('criar')
   createConta(

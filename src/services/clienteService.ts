@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { Gerente } from '../gerente/model/modelGerente';
+import { Gerente } from '../models/modelGerente';
 import { v4 as uuidv4 } from 'uuid';
-import { Cliente } from './model/modelCliente';
-import { ContaCorrente } from '../conta/models/modelContaCorrente';
-import { ContaPoupanca } from '../conta/models/modelContaPoupanca';
+import { Cliente } from '../models/modelCliente';
+import { ContaCorrente } from '../models/modelContaCorrente';
+import { ContaPoupanca } from '../models/modelContaPoupanca';
 
 @Injectable()
 export class ClienteService {

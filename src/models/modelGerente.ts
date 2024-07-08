@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
-import { Cliente } from "src/Bank/cliente/model/modelCliente";
-import { Conta } from "src/Bank/conta/models/modelConta";
+import { Cliente } from "src/models/modelCliente";
+import { Conta } from "src/models/modelConta";
 
 export class Gerente {
   id: string;

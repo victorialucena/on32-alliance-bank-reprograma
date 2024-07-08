@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { Gerente } from './model/modelGerente';
-import { ClienteService } from '../cliente/cliente.service'; 
+import { Gerente } from '../models/modelGerente';
+import { ClienteService } from './clienteService';
 
 @Injectable()
 export class GerenteService {
   private gerentes: Gerente[] = [];
 
-  constructor(private readonly clienteService: ClienteService) {} 
+  constructor(private readonly clienteService: ClienteService) { }
 
   createGerente(nome: string): Gerente {
     const newGerente = new Gerente(nome, []);
@@ -24,7 +24,7 @@ export class GerenteService {
       throw new Error(`Gerente com ID ${gerenteId} não encontrado.`);
     }
 
-    const cliente = this.clienteService.findClienteById(clienteId); 
+    const cliente = this.clienteService.findClienteById(clienteId);
     if (!cliente) {
       throw new Error(`Cliente com ID ${clienteId} não encontrado.`);
     }

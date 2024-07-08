@@ -1,10 +1,10 @@
 import { Controller, Post, Body, Param, Patch, Get } from '@nestjs/common';
-import { GerenteService } from './gerente.service';
-import { Gerente } from './model/modelGerente';
+import { GerenteService } from '../services/gerenteService';
+import { Gerente } from '../models/modelGerente';
 
 @Controller('gerentes')
 export class GerenteController {
-  constructor(private readonly gerenteService: GerenteService) {}
+  constructor(private readonly gerenteService: GerenteService) { }
 
   @Post('criar')
   createGerente(

@@ -1,4 +1,4 @@
-import { Cliente } from "../../cliente/model/modelCliente";
+import { Cliente } from "./modelCliente";
 import { v4 as uuidv4 } from "uuid";
 
 
@@ -17,9 +17,9 @@ export class Conta {
     this.client = client;
   }
 
-  depositar(valor: number): void {}
+  depositar(valor: number): void { }
 
-  sacar(valor: number): void {}
+  sacar(valor: number): void { }
 
-  transferir(valor: number, paraConta: Conta): void {}
+  transferir(valor: number, paraConta: Conta): void { }
 }

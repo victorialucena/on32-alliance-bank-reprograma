@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { ContaCorrente } from './models/modelContaCorrente';
-import { ContaPoupanca } from './models/modelContaPoupanca';
-import { Cliente } from '../cliente/model/modelCliente';
+import { ContaCorrente } from '../models/modelContaCorrente';
+import { ContaPoupanca } from '../models/modelContaPoupanca';
+import { Cliente } from '../models/modelCliente';
 
 @Injectable()
 export class ContaService {
@@ -30,11 +30,11 @@ export class ContaService {
   sacar(conta: ContaCorrente | ContaPoupanca, valor: number): boolean {
     if (valor <= conta.saldo) {
       conta.saldo -= valor;
-      return true; 
+      return true;
     }
-    return false; 
+    return false;
   }
-  
+
 
   transferir(contaOrigem: ContaCorrente | ContaPoupanca, valor: number, contaDestino: ContaCorrente | ContaPoupanca): boolean {
     if (this.sacar(contaOrigem, valor)) {
