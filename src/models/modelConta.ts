@@ -1,9 +1,10 @@
 import { Cliente } from "./modelCliente";
 import { v4 as uuidv4 } from "uuid";
 import { ClienteDTO } from "./modelCliente";
+import { OperacoesConta } from "src/interfaces/metodosConta";
 
 
-export class Conta {
+export class Conta implements OperacoesConta {
   id: string;
   tipo: 'CORRENTE' | 'POUPANCA';
   numeroConta: string;
@@ -17,9 +18,14 @@ export class Conta {
     this.saldo = saldo;
     this.client = client;
   }
+
+  depositar(valor: number): void{};
+  verificarSaldo(): void{};
+  sacar(valor: number): void{};
+  transferir(valor: number, paraConta: Conta): void{};
 }
 
-export class ContaDTO {
+export class ContaDTO implements OperacoesConta {
   id: string;
   tipo: 'CORRENTE' | 'POUPANCA';
   numeroConta: string;
@@ -33,4 +39,9 @@ export class ContaDTO {
     this.saldo = conta.saldo;
     this.client = new ClienteDTO(conta.client);
   }
+
+  depositar(valor: number): void{};
+  verificarSaldo(): void{};
+  sacar(valor: number): void{};
+  transferir(valor: number, paraConta: Conta): void{};
 }
