@@ -13,10 +13,9 @@ export class Cliente {
   phone: string;
   salaryIncome: number;
   contas: (ContaCorrente | ContaPoupanca)[];
-  gerente: Gerente;
+  gerente?: Gerente;
 
-
-  constructor(name: string, address: string, phone: string, salaryIncome: number, gerente: Gerente) {
+  constructor(name: string, address: string, phone: string, salaryIncome: number, gerente?: Gerente) {
     this.id = uuidv4();
     this.name = name;
     this.address = address;
@@ -34,8 +33,7 @@ export class ClienteDTO {
   phone: string;
   salaryIncome: number;
   contas: (ContaCorrenteDTO | ContaPoupancaDTO)[];
-  gerente: GerenteDTO;
-
+  gerente?: GerenteDTO;
 
   constructor(cliente: Cliente) {
     this.id = cliente.id;
@@ -43,7 +41,15 @@ export class ClienteDTO {
     this.address = cliente.address;
     this.phone = cliente.phone;
     this.salaryIncome = cliente.salaryIncome;
-    this.contas = cliente.contas.map(conta => conta instanceof ContaCorrente ? new ContaCorrenteDTO(conta) : new ContaPoupancaDTO(conta));
-    this.gerente = new GerenteDTO(cliente.gerente);
+    this.contas = cliente.contas.map(conta => {
+      if (conta instanceof ContaCorrente) {
+        return new ContaCorrenteDTO(conta);
+      } else if (conta instanceof ContaPoupanca) {
+        return new ContaPoupancaDTO(conta);
+      } else {
+        throw new Error("Tipo de conta desconhecido");
+      }
+    });
+    this.gerente = cliente.gerente ? new GerenteDTO(cliente.gerente) : undefined;
   }
 }
