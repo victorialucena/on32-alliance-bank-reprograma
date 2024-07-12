@@ -5,14 +5,17 @@ import { ContaPoupanca } from "./modelContaPoupanca";
 import { ContaCorrenteDTO } from "./modelContaCorrente";
 import { ContaPoupancaDTO } from "./modelContaPoupanca";
 import { GerenteDTO } from "src/models/modelGerente";
+import { Conta, ContaDTO } from "./modelConta";
 
 export class Cliente {
+
+  public conta: Conta[] = []
+
   id: string;
   name: string;
   address: string;
   phone: string;
   salaryIncome: number;
-  contas: (ContaCorrente | ContaPoupanca)[];
   gerente?: Gerente;
 
   constructor(name: string, address: string, phone: string, salaryIncome: number, gerente?: Gerente) {
@@ -21,18 +24,20 @@ export class Cliente {
     this.address = address;
     this.phone = phone;
     this.salaryIncome = salaryIncome;
-    this.contas = [];
+    this.conta = this.conta;
     this.gerente = gerente;
   }
 }
 
 export class ClienteDTO {
+
+  public conta: ContaDTO[] = []
+
   id: string;
   name: string;
   address: string;
   phone: string;
   salaryIncome: number;
-  contas: (ContaCorrenteDTO | ContaPoupancaDTO)[];
   gerente?: GerenteDTO;
 
   constructor(cliente: Cliente) {
@@ -41,15 +46,7 @@ export class ClienteDTO {
     this.address = cliente.address;
     this.phone = cliente.phone;
     this.salaryIncome = cliente.salaryIncome;
-    this.contas = cliente.contas.map(conta => {
-      if (conta instanceof ContaCorrente) {
-        return new ContaCorrenteDTO(conta);
-      } else if (conta instanceof ContaPoupanca) {
-        return new ContaPoupancaDTO(conta);
-      } else {
-        throw new Error("Tipo de conta desconhecido");
-      }
-    });
+    this.conta = cliente.conta.map(conta => new ContaDTO(conta));
     this.gerente = cliente.gerente ? new GerenteDTO(cliente.gerente) : undefined;
   }
 }

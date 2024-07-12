@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Body } from '@nestjs/common';
+import { Controller, Get, Param, Post, Body, BadRequestException } from '@nestjs/common';
 import { ClienteService } from 'src/services/clienteService';
 import { Cliente, ClienteDTO } from '../models/modelCliente';
 import { Gerente } from '../models/modelGerente';
@@ -28,4 +28,24 @@ export class ClienteController {
   findClienteById(@Param('id') id: string): Cliente | undefined {
     return this.clienteService.findClienteById(id);
   }
+
+  @Post(':idCliente/contas/:tipo')
+  async abrirContaParaCliente(
+    @Param('idCliente') idCliente: string,
+    @Param('tipo') tipo: 'CORRENTE' | 'POUPANCA',
+    @Body('taxaDeJuros') taxaDeJuros?: number,
+  ) {
+    try {
+      const conta = await this.clienteService.abrirContaParaCliente(idCliente, tipo, taxaDeJuros);
+      return { message: 'Conta aberta com sucesso', conta };
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      } else {
+        throw new BadRequestException('Erro ao abrir conta.');
+      }
+    }
+  }
 }
+
+

@@ -16,22 +16,16 @@ export class ContaController {
   ): Promise<ContaCorrenteDTO | ContaPoupancaDTO> {
     try {
       const conta = await this.contaService.createConta(clienteId, tipo, taxaDeJuros);
-
-      if (tipo === 'CORRENTE') {
-        return new ContaCorrenteDTO(conta as ContaCorrente);
-      } else if (tipo === 'POUPANCA') {
-        return new ContaPoupancaDTO(conta as ContaPoupanca);
-      } else {
-        throw new BadRequestException('Tipo de conta inválido.');
-      }
+      return conta;
     } catch (error) {
       if (error instanceof NotFoundException || error instanceof BadRequestException) {
-        throw error; // Propaga exceções específicas para serem tratadas globalmente, se necessário
+        throw error;
       } else {
         throw new BadRequestException('Erro ao abrir conta.');
       }
     }
   }
+  
 
 
   @Get()

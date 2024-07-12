@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Cliente } from '../models/modelCliente';
-import { ContaCorrente } from '../models/modelContaCorrente';
-import { ContaPoupanca } from '../models/modelContaPoupanca';
+import { ContaCorrente, ContaCorrenteDTO } from '../models/modelContaCorrente';
+import { ContaPoupanca, ContaPoupancaDTO } from '../models/modelContaPoupanca';
 import { BadRequestException, forwardRef, Inject, Injectable } from '@nestjs/common';
 import { ContaService } from './contaService';
 import { Gerente } from 'src/models/modelGerente';
@@ -29,7 +29,20 @@ export class ClienteService {
     return this.clientes.find(cliente => cliente.id === id);
   }
 
-  abrirContaParaCliente(idCliente: string, tipo: 'CORRENTE' | 'POUPANCA', taxaDeJuros?: number) {
-    return this.contaService.createConta(idCliente, tipo, taxaDeJuros);
+  updateCliente(cliente: Cliente): void {
+    const index = this.clientes.findIndex(c => c.id === cliente.id);
+    if (index !== -1) {
+      this.clientes[index] = cliente;
+    }
   }
+  abrirContaParaCliente(idCliente: string, tipo: 'CORRENTE' | 'POUPANCA', taxaDeJuros?: number) {
+    const contaDTO = this.contaService.createConta(idCliente, tipo, taxaDeJuros);
+    const cliente = this.findClienteById(idCliente);
+    if (cliente) {
+        // A conta já foi adicionada ao cliente dentro do método createConta
+        this.updateCliente(cliente); // Atualiza o cliente na lista
+    }
+    return contaDTO;
+  }
+
 }

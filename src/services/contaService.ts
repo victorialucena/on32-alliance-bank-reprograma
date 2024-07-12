@@ -20,8 +20,9 @@ export class ContaService {
     if (!cliente) {
       throw new NotFoundException('Cliente não encontrado.');
     }
-
-    let newConta;
+  
+    let newConta: ContaCorrente | ContaPoupanca;
+  
     if (tipo === 'CORRENTE') {
       if (cliente.salaryIncome >= 500) {
         const numeroConta = this.generateRandomAccountNumber();
@@ -40,11 +41,12 @@ export class ContaService {
     }
 
     this.contas.push(newConta);
-    cliente.contas.push(newConta);
-
+    cliente.conta.push(newConta);
+    
+  
     if (newConta instanceof ContaCorrente) {
       return new ContaCorrenteDTO(newConta);
-    } else {
+    } else if (newConta instanceof ContaPoupanca) {
       return new ContaPoupancaDTO(newConta);
     }
   }

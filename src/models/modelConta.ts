@@ -37,7 +37,6 @@ export class ContaDTO implements OperacoesConta {
     this.tipo = conta.tipo;
     this.numeroConta = conta.numeroConta;
     this.saldo = conta.saldo;
-    this.client = new ClienteDTO(conta.client);
   }
 
   depositar(valor: number): void{};
