@@ -9,7 +9,7 @@ export class GerenteService {
   constructor(private readonly clienteService: ClienteService) { }
 
   createGerente(nome: string): Gerente {
-    const newGerente = new Gerente(nome, []);
+    const newGerente = new Gerente(nome);
     this.gerentes.push(newGerente);
     return newGerente;
   }
@@ -29,6 +29,7 @@ export class GerenteService {
       throw new Error(`Cliente com ID ${clienteId} não encontrado.`);
     }
 
+    cliente.gerenteId = gerenteId;
     gerente.clientes.push(cliente);
   }
 
@@ -38,6 +39,18 @@ export class GerenteService {
       throw new Error(`Gerente com ID ${gerenteId} não encontrado.`);
     }
 
-    gerente.clientes = gerente.clientes.filter(cliente => cliente.id !== clienteId);
+    const clienteIndex = gerente.clientes.findIndex(cliente => cliente.id === clienteId);
+    if (clienteIndex === -1) {
+      throw new Error(`Cliente com ID ${clienteId} não encontrado.`);
+    }
+
+    gerente.clientes[clienteIndex].gerenteId = undefined;
+    gerente.clientes.splice(clienteIndex, 1);
   }
+
+  getAllGerentes(): Gerente[] {
+    return this.gerentes;
+  }
+
+  
 }

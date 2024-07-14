@@ -1,16 +1,14 @@
 import { v4 as uuidv4 } from "uuid";
-import { Cliente } from "src/models/modelCliente";
-import { ClienteDTO } from "src/models/modelCliente";
+import { Cliente, ClienteDTO } from "src/models/modelCliente";
 
 export class Gerente {
   id: string;
   nome: string;
-  clientes: Cliente[];
+  clientes: Cliente[] = [];
 
-  constructor(nome: string, clientes: Cliente[] = []) {
+  constructor(nome: string) {
     this.id = uuidv4();
     this.nome = nome;
-    this.clientes = clientes;
   }
 }
 

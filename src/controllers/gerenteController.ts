@@ -1,6 +1,6 @@
 import { Controller, Post, Body, Param, Patch, Get } from '@nestjs/common';
 import { GerenteService } from '../services/gerenteService';
-import { Gerente } from '../models/modelGerente';
+import { GerenteDTO } from '../models/modelGerente';
 
 @Controller('gerentes')
 export class GerenteController {
@@ -13,19 +13,19 @@ export class GerenteController {
     const newGerente = this.gerenteService.createGerente(nome);
     return {
       message: 'Gerente criado com sucesso.',
-      data: newGerente,
+      data: new GerenteDTO(newGerente),
     };
   }
 
   @Get(':gerenteId')
   getGerenteById(
     @Param('gerenteId') gerenteId: string,
-  ): Gerente {
+  ): GerenteDTO {
     const gerente = this.gerenteService.findGerenteById(gerenteId);
     if (!gerente) {
       throw new Error(`Gerente com ID ${gerenteId} não encontrado.`);
     }
-    return gerente;
+    return new GerenteDTO(gerente);
   }
 
   @Patch(':gerenteId/cliente')
@@ -33,17 +33,9 @@ export class GerenteController {
     @Param('gerenteId') gerenteId: string,
     @Body() body: { clienteId: string },
   ) {
-    const gerente = this.gerenteService.findGerenteById(gerenteId);
-    if (!gerente) {
-      throw new Error(`Gerente com ID ${gerenteId} não encontrado.`);
-    }
-
-    const { clienteId } = body;
-
-    this.gerenteService.associateCliente(gerenteId, clienteId);
-
+    this.gerenteService.associateCliente(gerenteId, body.clienteId);
     return {
-      message: `Cliente com ID ${clienteId} associado ao gerente ${gerenteId} com sucesso.`,
+      message: `Cliente com ID ${body.clienteId} associado ao gerente ${gerenteId} com sucesso.`,
     };
   }
 
@@ -56,5 +48,11 @@ export class GerenteController {
     return {
       message: `Cliente com ID ${clienteId} removido do gerente ${gerenteId} com sucesso.`,
     };
+  }
+
+  @Get()
+  async getAllGerentes(): Promise<GerenteDTO[]> {
+    const gerentes = this.gerenteService.getAllGerentes();
+    return gerentes.map(gerente => new GerenteDTO(gerente));
   }
 }

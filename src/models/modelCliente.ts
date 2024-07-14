@@ -1,14 +1,8 @@
 import { v4 as uuidv4 } from "uuid";
 import { Gerente } from "src/models/modelGerente";
-import { ContaCorrente } from "./modelContaCorrente";
-import { ContaPoupanca } from "./modelContaPoupanca";
-import { ContaCorrenteDTO } from "./modelContaCorrente";
-import { ContaPoupancaDTO } from "./modelContaPoupanca";
-import { GerenteDTO } from "src/models/modelGerente";
 import { Conta, ContaDTO } from "./modelConta";
 
 export class Cliente {
-
   public conta: Conta[] = []
 
   id: string;
@@ -16,29 +10,27 @@ export class Cliente {
   address: string;
   phone: string;
   salaryIncome: number;
-  gerente?: Gerente;
+  gerenteId?: string;
 
-  constructor(name: string, address: string, phone: string, salaryIncome: number, gerente?: Gerente) {
+  constructor(name: string, address: string, phone: string, salaryIncome: number, gerenteId?: string) {
     this.id = uuidv4();
     this.name = name;
     this.address = address;
     this.phone = phone;
     this.salaryIncome = salaryIncome;
-    this.conta = this.conta;
-    this.gerente = gerente;
+    this.gerenteId = gerenteId;
   }
 }
 
 export class ClienteDTO {
-
-  public conta: ContaDTO[] = []
+  public conta: Conta[] = []
 
   id: string;
   name: string;
   address: string;
   phone: string;
   salaryIncome: number;
-  gerente?: GerenteDTO;
+  gerenteId?: string;
 
   constructor(cliente: Cliente) {
     this.id = cliente.id;
@@ -47,6 +39,6 @@ export class ClienteDTO {
     this.phone = cliente.phone;
     this.salaryIncome = cliente.salaryIncome;
     this.conta = cliente.conta.map(conta => new ContaDTO(conta));
-    this.gerente = cliente.gerente ? new GerenteDTO(cliente.gerente) : undefined;
+    this.gerenteId = cliente.gerenteId;
   }
 }

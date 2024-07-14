@@ -15,8 +15,8 @@ export class ClienteService {
     private readonly contaService: ContaService,
   ) {}
 
-  createCliente(name: string, address: string, phone: string, salaryIncome: number, gerente?: Gerente): Cliente {
-    const newCliente = new Cliente(name, address, phone, salaryIncome, gerente);
+  createCliente(name: string, address: string, phone: string, salaryIncome: number, gerenteId?: string): Cliente {
+    const newCliente = new Cliente(name, address, phone, salaryIncome, gerenteId);
     this.clientes.push(newCliente);
     return newCliente;
   }

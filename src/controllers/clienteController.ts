@@ -15,9 +15,9 @@ export class ClienteController {
     @Body('address') address: string,
     @Body('phone') phone: string,
     @Body('salaryIncome') salaryIncome: number,
-    @Body('gerente') gerente?: Gerente,
+    @Body('gerente') gerenteId?: string,
   ): Cliente {
-    return this.clienteService.createCliente(name, address, phone, salaryIncome, gerente);
+    return this.clienteService.createCliente(name, address, phone, salaryIncome, gerenteId);
   }
 
   @Patch(':idCliente/mudar-tipo-conta/:numeroConta')
