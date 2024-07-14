@@ -1,7 +1,9 @@
-import { Controller, Get, Param, Post, Body, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Param, Post, Body, BadRequestException, NotFoundException, Patch, Delete } from '@nestjs/common';
 import { ClienteService } from 'src/services/clienteService';
 import { Cliente, ClienteDTO } from '../models/modelCliente';
 import { Gerente } from '../models/modelGerente';
+import { ContaCorrenteDTO } from 'src/models/modelContaCorrente';
+import { ContaPoupancaDTO } from 'src/models/modelContaPoupanca';
 
 @Controller('clientes')
 export class ClienteController {
@@ -16,6 +18,32 @@ export class ClienteController {
     @Body('gerente') gerente?: Gerente,
   ): Cliente {
     return this.clienteService.createCliente(name, address, phone, salaryIncome, gerente);
+  }
+
+  @Patch(':idCliente/mudar-tipo-conta/:numeroConta')
+  mudarTipoDeConta(
+    @Param('idCliente') idCliente: string,
+    @Param('numeroConta') numeroConta: string,
+    @Body('novoTipo') novoTipo: 'CORRENTE' | 'POUPANCA',
+    @Body('taxaDeJuros') taxaDeJuros?: number
+  ): ContaCorrenteDTO | ContaPoupancaDTO {
+    const contaNova = this.clienteService.mudarTipoDeConta(idCliente, numeroConta, novoTipo, taxaDeJuros);
+    if (!contaNova) {
+      throw new NotFoundException('Erro ao mudar o tipo de conta.');
+    }
+    return contaNova;
+  }
+
+  @Delete(':idCliente/fechar-conta/:numeroConta')
+  fecharConta(
+    @Param('idCliente') idCliente: string,
+    @Param('numeroConta') numeroConta: string
+  ): { message: string } {
+    const contaFechada = this.clienteService.fecharConta(idCliente, numeroConta);
+    if (!contaFechada) {
+      throw new NotFoundException('Erro ao fechar a conta.');
+    }
+    return { message: 'Conta fechada com sucesso.' };
   }
   
   @Get()

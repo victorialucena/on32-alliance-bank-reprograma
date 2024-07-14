@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Cliente } from '../models/modelCliente';
 import { ContaCorrente, ContaCorrenteDTO } from '../models/modelContaCorrente';
 import { ContaPoupanca, ContaPoupancaDTO } from '../models/modelContaPoupanca';
-import { BadRequestException, forwardRef, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ContaService } from './contaService';
 import { Gerente } from 'src/models/modelGerente';
 
@@ -39,10 +39,38 @@ export class ClienteService {
     const contaDTO = this.contaService.createConta(idCliente, tipo, taxaDeJuros);
     const cliente = this.findClienteById(idCliente);
     if (cliente) {
-        // A conta já foi adicionada ao cliente dentro do método createConta
         this.updateCliente(cliente); // Atualiza o cliente na lista
     }
     return contaDTO;
+  }
+
+  mudarTipoDeConta(idCliente: string, numeroConta: string, novoTipo: 'CORRENTE' | 'POUPANCA', taxaDeJuros?: number){
+    const contaNova = this.contaService.mudarTipoDeConta(numeroConta, novoTipo, taxaDeJuros);
+    const cliente = this.findClienteById(idCliente);
+    if (cliente) {
+      this.updateCliente(cliente); 
+  }
+  return contaNova;
+  }
+
+  fecharConta(idCliente: string, numeroConta: string): boolean {
+    const cliente = this.findClienteById(idCliente);
+    if (!cliente) {
+      throw new NotFoundException('Cliente não encontrado.');
+    }
+
+    const conta = cliente.conta.find(conta => conta.numeroConta === numeroConta);
+    if (!conta) {
+      throw new NotFoundException('Conta não encontrada para o cliente.');
+    }
+
+    const contaFechada = this.contaService.fecharConta(numeroConta);
+    if (contaFechada) {
+      cliente.conta = cliente.conta.filter(conta => conta.numeroConta !== numeroConta);
+      this.updateCliente(cliente);
+    }
+
+    return contaFechada;
   }
 
 }
