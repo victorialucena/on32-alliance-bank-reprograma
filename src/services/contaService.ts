@@ -43,6 +43,8 @@ export class ContaService {
 
     this.contas.push(newConta);
     cliente.conta.push(newConta);
+    this.clienteService.updateCliente(cliente);
+
     
     if (newConta instanceof ContaCorrente) {
       return new ContaCorrenteDTO(newConta);
@@ -50,6 +52,34 @@ export class ContaService {
       return new ContaPoupancaDTO(newConta);
     }
   }
+
+  // mudarTipoDeConta(numeroConta: string, novoTipo: 'CORRENTE' | 'POUPANCA', taxaDeJuros?: number): ContaCorrenteDTO | ContaPoupancaDTO {
+  //   const contaIndex = this.contas.findIndex(conta => conta.numeroConta === numeroConta);
+  //   if (contaIndex === -1) {
+  //     throw new NotFoundException('Conta não encontrada.');
+  //   }
+
+  //   const contaAtual = this.contas[contaIndex];
+  //   const cliente = contaAtual.client;
+
+  //   this.contas.splice(contaIndex, 1);
+  //   const contaClienteIndex = cliente.conta.findIndex(conta => conta.numeroConta === numeroConta);
+  //   cliente.conta.splice(contaClienteIndex, 1);
+
+
+  //   return this.createConta(cliente.id, novoTipo, taxaDeJuros, contaAtual.saldo);
+  // }
+
+  // fecharConta(numeroConta: string): boolean {
+  //   const contaIndex = this.contas.findIndex(conta => conta.numeroConta === numeroConta);
+
+  //   if (contaIndex === -1) {
+  //     throw new NotFoundException('Conta não encontrada.');
+  //   }
+
+  //   this.contas.splice(contaIndex, 1);
+  //   return true;
+  // }
 
   mudarTipoDeConta(numeroConta: string, novoTipo: 'CORRENTE' | 'POUPANCA', taxaDeJuros?: number): ContaCorrenteDTO | ContaPoupancaDTO {
     const contaIndex = this.contas.findIndex(conta => conta.numeroConta === numeroConta);
@@ -63,6 +93,7 @@ export class ContaService {
     this.contas.splice(contaIndex, 1);
     const contaClienteIndex = cliente.conta.findIndex(conta => conta.numeroConta === numeroConta);
     cliente.conta.splice(contaClienteIndex, 1);
+    this.clienteService.updateCliente(cliente);
 
     return this.createConta(cliente.id, novoTipo, taxaDeJuros, contaAtual.saldo);
   }
@@ -72,7 +103,10 @@ export class ContaService {
     if (contaIndex === -1) {
       throw new NotFoundException('Conta não encontrada.');
     }
-
+    const conta = this.contas[contaIndex];
+    const cliente = conta.client;
+    cliente.conta = cliente.conta.filter(c => c.numeroConta !== numeroConta);
+    this.clienteService.updateCliente(cliente);
     this.contas.splice(contaIndex, 1);
     return true;
   }

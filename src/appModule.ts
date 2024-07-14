@@ -4,10 +4,11 @@ import { ContaModule } from './modules/contaModule';
 import { GerenteModule } from './modules/gerenteModule';
 import { ClienteController } from './controllers/clienteController';
 import { ContaController } from './controllers/contaController';
+import { GerenteController } from './controllers/gerenteController';
 
 @Module({
   imports: [ClienteModule, ContaModule, GerenteModule],
-  controllers: [ClienteController, ContaController],
+  controllers: [ClienteController, ContaController, GerenteController],
   providers: [],
 })
 export class AppModule { }

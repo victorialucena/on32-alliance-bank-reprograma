@@ -39,7 +39,7 @@ export class ClienteService {
     const contaDTO = this.contaService.createConta(idCliente, tipo, taxaDeJuros);
     const cliente = this.findClienteById(idCliente);
     if (cliente) {
-        this.updateCliente(cliente); // Atualiza o cliente na lista
+        this.updateCliente(cliente); 
     }
     return contaDTO;
   }
