@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Cliente } from '../models/modelCliente';
 import { ContaCorrente, ContaCorrenteDTO } from '../models/modelContaCorrente';
 import { ContaPoupanca, ContaPoupancaDTO } from '../models/modelContaPoupanca';
-import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, forwardRef, Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { ContaService } from './contaService';
 import { Gerente } from 'src/models/modelGerente';
 
@@ -71,6 +71,50 @@ export class ClienteService {
     }
 
     return contaFechada;
+  }
+
+  buscarContaPorNumero(numeroConta: string): ContaCorrente | ContaPoupanca | undefined {
+    return this.contaService.findContaByNumero(numeroConta);
+  }
+  
+  async verificarProprietarioDaConta(clienteId: string, numeroConta: string): Promise<boolean> {
+    const conta = await this.contaService.findContaByNumero(numeroConta);
+    if (!conta) {
+      throw new NotFoundException('Conta não encontrada.');
+    }
+    return conta.client.id === clienteId;
+  }
+
+  async depositarNaConta(clienteId: string, numeroConta: string, valor: number): Promise<void> {
+    const isProprietario = await this.verificarProprietarioDaConta(clienteId, numeroConta);
+    if (!isProprietario) {
+      throw new ForbiddenException('Você não tem permissão para realizar esta operação.');
+    }
+
+    await this.contaService.depositar(numeroConta, valor);
+  }
+
+  async transferirEntreContas(clienteId: string, numeroContaOrigem: string, numeroContaDestino: string, valor: number): Promise<boolean> {
+    const isProprietarioOrigem = await this.verificarProprietarioDaConta(clienteId, numeroContaOrigem);
+    if (!isProprietarioOrigem) {
+      throw new ForbiddenException('Você não tem permissão para realizar esta operação na conta de origem.');
+    }
+
+    const isProprietarioDestino = await this.verificarProprietarioDaConta(clienteId, numeroContaDestino);
+    if (!isProprietarioDestino) {
+      throw new ForbiddenException('Você não tem permissão para realizar esta operação na conta de destino.');
+    }
+
+    return this.contaService.transferir(numeroContaOrigem, valor, numeroContaDestino);
+  }
+
+  async sacarDaConta(clienteId: string, contaNumero: string, valor: number): Promise<boolean> {
+    const isProprietario = await this.verificarProprietarioDaConta(clienteId, contaNumero);
+    if (!isProprietario) {
+      throw new ForbiddenException('Você não tem permissão para realizar esta operação.');
+    }
+
+    return this.contaService.sacar(contaNumero, valor);
   }
 
 }

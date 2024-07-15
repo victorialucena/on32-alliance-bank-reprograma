@@ -53,33 +53,6 @@ export class ContaService {
     }
   }
 
-  // mudarTipoDeConta(numeroConta: string, novoTipo: 'CORRENTE' | 'POUPANCA', taxaDeJuros?: number): ContaCorrenteDTO | ContaPoupancaDTO {
-  //   const contaIndex = this.contas.findIndex(conta => conta.numeroConta === numeroConta);
-  //   if (contaIndex === -1) {
-  //     throw new NotFoundException('Conta não encontrada.');
-  //   }
-
-  //   const contaAtual = this.contas[contaIndex];
-  //   const cliente = contaAtual.client;
-
-  //   this.contas.splice(contaIndex, 1);
-  //   const contaClienteIndex = cliente.conta.findIndex(conta => conta.numeroConta === numeroConta);
-  //   cliente.conta.splice(contaClienteIndex, 1);
-
-
-  //   return this.createConta(cliente.id, novoTipo, taxaDeJuros, contaAtual.saldo);
-  // }
-
-  // fecharConta(numeroConta: string): boolean {
-  //   const contaIndex = this.contas.findIndex(conta => conta.numeroConta === numeroConta);
-
-  //   if (contaIndex === -1) {
-  //     throw new NotFoundException('Conta não encontrada.');
-  //   }
-
-  //   this.contas.splice(contaIndex, 1);
-  //   return true;
-  // }
 
   mudarTipoDeConta(numeroConta: string, novoTipo: 'CORRENTE' | 'POUPANCA', taxaDeJuros?: number): ContaCorrenteDTO | ContaPoupancaDTO {
     const contaIndex = this.contas.findIndex(conta => conta.numeroConta === numeroConta);
@@ -111,25 +84,48 @@ export class ContaService {
     return true;
   }
 
-  depositar(conta: ContaCorrente | ContaPoupanca, valor: number): void {
-    conta.depositar(valor);
+  async depositar(numeroConta: string, valor: number): Promise<void> {
+    const conta = await this.findContaByNumero(numeroConta);
+    if (!conta) {
+      throw new NotFoundException('Conta não encontrada.');
+    }
+
+    if (valor <= 0) {
+      throw new BadRequestException('O valor do depósito deve ser maior que zero.');
+    }
+
+    conta.saldo += valor;
   }
 
-  sacar(conta: ContaCorrente | ContaPoupanca, valor: number): boolean {
-    if (valor <= conta.saldo) {
+
+  async sacar(numeroConta: string, valor: number): Promise<boolean> {
+    const conta = this.findContaByNumero(numeroConta);
+    if (!conta) {
+      throw new NotFoundException('Conta não encontrada.');
+    }
+
+    if (valor > 0 && valor <= conta.saldo) {
       conta.saldo -= valor;
       return true;
     }
     return false;
   }
 
-  transferir(contaOrigem: ContaCorrente | ContaPoupanca, valor: number, contaDestino: ContaCorrente | ContaPoupanca): boolean {
-    if (this.sacar(contaOrigem, valor)) {
-      this.depositar(contaDestino, valor);
+  async transferir(numeroContaOrigem: string, valor: number, numeroContaDestino: string): Promise<boolean> {
+    const contaOrigem = this.findContaByNumero(numeroContaOrigem);
+    const contaDestino = this.findContaByNumero(numeroContaDestino);
+
+    if (!contaOrigem || !contaDestino) {
+      throw new NotFoundException('Contas não encontradas.');
+    }
+
+    if (await this.sacar(numeroContaOrigem, valor)) {
+      await this.depositar(numeroContaDestino, valor);
       return true;
     }
     return false;
   }
+
 
   findContaByNumero(numeroConta: string): ContaCorrente | ContaPoupanca | undefined {
     return this.contas.find(conta => conta.numeroConta === numeroConta);

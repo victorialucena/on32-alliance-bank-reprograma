@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Body, BadRequestException, NotFoundException, Patch, Delete } from '@nestjs/common';
+import { Controller, Get, Param, Post, Body, BadRequestException, NotFoundException, Patch, Delete, ForbiddenException, Put } from '@nestjs/common';
 import { ClienteService } from 'src/services/clienteService';
 import { Cliente, ClienteDTO } from '../models/modelCliente';
 import { Gerente } from '../models/modelGerente';
@@ -74,6 +74,53 @@ export class ClienteController {
       }
     }
   }
+
+  @Post(':clienteId/contas/:numeroConta/depositar')
+  async depositarEmConta(
+    @Param('clienteId') clienteId: string,
+    @Param('numeroConta') numeroConta: string,
+    @Body('valor') valor: number,
+  ): Promise<void> {
+    try {
+      await this.clienteService.depositarNaConta(clienteId, numeroConta, valor);
+    } catch (error) {
+      if (error instanceof ForbiddenException || error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new Error('Erro ao depositar na conta.');
+    }
+  }
+
+  @Put('transferir')
+  async transferirEntreContas(
+    @Body('clienteId') clienteId: string,
+    @Body('numeroContaOrigem') numeroContaOrigem: string,
+    @Body('numeroContaDestino') numeroContaDestino: string,
+    @Body('valor') valor: number,
+  ): Promise<boolean> {
+    try {
+      return await this.clienteService.transferirEntreContas(clienteId, numeroContaOrigem, numeroContaDestino, valor);
+    } catch (error) {
+      throw new Error('Erro ao transferir entre contas.');
+    }
+  }
+
+  @Put('sacar/:contaNumero')
+  async sacarDaConta(
+    @Param('contaNumero') contaNumero: string,
+    @Body('clienteId') clienteId: string,
+    @Body('valor') valor: number,
+  ): Promise<boolean> {
+    try {
+      return await this.clienteService.sacarDaConta(clienteId, contaNumero, valor);
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new Error('Erro ao sacar da conta.');
+    }
+  }
+
 }
 
 
