@@ -6,7 +6,6 @@ import { Inject } from '@nestjs/common';
 import { Conta } from 'src/models/modelConta';
 import { Cliente } from 'src/models/modelCliente';
 
-
 @Injectable()
 export class ContaService {
   private contas: (ContaCorrente | ContaPoupanca)[] = [];
@@ -27,7 +26,8 @@ export class ContaService {
     if (tipo === 'CORRENTE') {
       if (cliente.salaryIncome >= 500) {
         const numeroConta = this.generateRandomAccountNumber();
-        newConta = new ContaCorrente(numeroConta, saldoInicial, cliente);
+        const numeroContaCorrente = `CC-${numeroConta}`
+        newConta = new ContaCorrente(numeroContaCorrente, saldoInicial, cliente);
       } else {
         throw new BadRequestException('O cliente não atende aos requisitos mínimos para abrir uma conta corrente.');
       }
@@ -36,7 +36,8 @@ export class ContaService {
         throw new BadRequestException('A taxa de juros deve ser fornecida para uma conta poupança.');
       }
       const numeroConta = this.generateRandomAccountNumber();
-      newConta = new ContaPoupanca(numeroConta, saldoInicial, cliente, taxaDeJuros);
+      const numeroContaPoupanca = `CP-${numeroConta}`
+      newConta = new ContaPoupanca(numeroContaPoupanca, saldoInicial, cliente, taxaDeJuros);
     } else {
       throw new BadRequestException('Tipo de conta inválido.');
     }
@@ -103,13 +104,19 @@ export class ContaService {
     if (!conta) {
       throw new NotFoundException('Conta não encontrada.');
     }
-
-    if (valor > 0 && valor <= conta.saldo) {
-      conta.saldo -= valor;
-      return true;
+  
+    if (valor <= 0) {
+      throw new BadRequestException('O valor de saque deve ser maior que zero.');
     }
-    return false;
+  
+    if (valor > conta.saldo) {
+      throw new BadRequestException('O valor de saque deve ser menor ou igual ao saldo da conta');
+    }
+  
+    conta.saldo -= valor;
+    return true; 
   }
+  
 
   async transferir(numeroContaOrigem: string, valor: number, numeroContaDestino: string): Promise<boolean> {
     const contaOrigem = this.findContaByNumero(numeroContaOrigem);
@@ -139,13 +146,8 @@ export class ContaService {
     const min = 1000;
     const max = 9999;
     const randomNumber = Math.floor(Math.random() * (max - min + 1)) + min;
-    const numeroConta = `CC-${randomNumber}`;
+    const numeroConta = `${randomNumber}`;
     return numeroConta;
-  }
-
-  getClienteDaConta(numeroConta: string): Cliente | undefined {
-    const conta = this.findContaByNumero(numeroConta);
-    return conta ? conta.client : undefined;
   }
   
 }
