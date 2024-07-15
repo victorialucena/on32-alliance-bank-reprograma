@@ -116,4 +116,13 @@ export class GerenteService {
 
   }
 
+  deleteGerente(gerenteId: string): boolean {
+    const index = this.gerentes.findIndex(gerente => gerente.id === gerenteId);
+    if (index === -1) {
+      return false; // Gerente não encontrado
+    }
+    this.gerentes.splice(index, 1);
+    return true;
+  }
+
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Body, BadRequestException, NotFoundException, Patch, Delete, ForbiddenException, Put } from '@nestjs/common';
+import { Controller, Get, Param, Post, Body, BadRequestException, NotFoundException, Patch, Delete, ForbiddenException, Put, HttpStatus } from '@nestjs/common';
 import { ClienteService } from 'src/services/clienteService';
 import { Cliente, ClienteDTO } from '../models/modelCliente';
 import { Gerente } from '../models/modelGerente';
@@ -16,8 +16,13 @@ export class ClienteController {
     @Body('phone') phone: string,
     @Body('salaryIncome') salaryIncome: number,
     @Body('gerente') gerenteId?: string,
-  ): Cliente {
-    return this.clienteService.createCliente(name, address, phone, salaryIncome, gerenteId);
+  ) {
+    const cliente = this.clienteService.createCliente(name, address, phone, salaryIncome, gerenteId);
+    return {
+      statusCode: HttpStatus.CREATED,
+      message: 'Cliente criado com sucesso',
+      data: cliente,
+    };
   }
 
   @Patch(':idCliente/mudar-tipo-conta/:numeroConta')
@@ -26,35 +31,52 @@ export class ClienteController {
     @Param('numeroConta') numeroConta: string,
     @Body('novoTipo') novoTipo: 'CORRENTE' | 'POUPANCA',
     @Body('taxaDeJuros') taxaDeJuros?: number
-  ): ContaCorrenteDTO | ContaPoupancaDTO {
+  ) {
     const contaNova = this.clienteService.mudarTipoDeConta(idCliente, numeroConta, novoTipo, taxaDeJuros);
     if (!contaNova) {
       throw new NotFoundException('Erro ao mudar o tipo de conta.');
     }
-    return contaNova;
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Tipo de conta mudado com sucesso',
+      data: contaNova,
+    };
   }
 
   @Delete(':idCliente/fechar-conta/:numeroConta')
   fecharConta(
     @Param('idCliente') idCliente: string,
     @Param('numeroConta') numeroConta: string
-  ): { message: string } {
+  ) {
     const contaFechada = this.clienteService.fecharConta(idCliente, numeroConta);
     if (!contaFechada) {
       throw new NotFoundException('Erro ao fechar a conta.');
     }
-    return { message: 'Conta fechada com sucesso.' };
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Conta fechada com sucesso',
+      data: null,
+    };
   }
   
   @Get()
-  async getAllClientes(): Promise<ClienteDTO[]> {
+  async getAllClientes() {
     const clientes = await this.clienteService.getAllClientes();
-    return clientes.map(cliente => new ClienteDTO(cliente));
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Todos os clientes retornados com sucesso',
+      data: clientes.map(cliente => new ClienteDTO(cliente)),
+    };
   }
 
   @Get(':id')
-  findClienteById(@Param('id') id: string): Cliente | undefined {
-    return this.clienteService.findClienteById(id);
+  findClienteById(@Param('id') id: string) {
+    const cliente = this.clienteService.findClienteById(id);
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Cliente retornado com sucesso',
+      data: cliente,
+    };
   }
 
   @Post(':idCliente/contas/:tipo')
@@ -65,13 +87,13 @@ export class ClienteController {
   ) {
     try {
       const conta = await this.clienteService.abrirContaParaCliente(idCliente, tipo, taxaDeJuros);
-      return { message: 'Conta aberta com sucesso', conta };
+      return {
+        statusCode: HttpStatus.CREATED,
+        message: 'Conta aberta com sucesso',
+        data: conta,
+      };
     } catch (error) {
-      if (error instanceof BadRequestException) {
-        throw error;
-      } else {
-        throw new BadRequestException('Erro ao abrir conta.');
-      }
+      throw new BadRequestException('Erro ao abrir conta.');
     }
   }
 
@@ -80,13 +102,15 @@ export class ClienteController {
     @Param('clienteId') clienteId: string,
     @Param('numeroConta') numeroConta: string,
     @Body('valor') valor: number,
-  ): Promise<void> {
+  ) {
     try {
-      await this.clienteService.depositarNaConta(clienteId, numeroConta, valor);
+     const resultado =  await this.clienteService.depositarNaConta(clienteId, numeroConta, valor);
+      return {
+        statusCode: HttpStatus.OK,
+        message: 'Depósito realizado com sucesso',
+        data: resultado,
+      };
     } catch (error) {
-      if (error instanceof ForbiddenException || error instanceof NotFoundException) {
-        throw error;
-      }
       throw new Error('Erro ao depositar na conta.');
     }
   }
@@ -97,9 +121,14 @@ export class ClienteController {
     @Body('numeroContaOrigem') numeroContaOrigem: string,
     @Body('numeroContaDestino') numeroContaDestino: string,
     @Body('valor') valor: number,
-  ): Promise<boolean> {
+  ) {
     try {
-      return await this.clienteService.transferirEntreContas(clienteId, numeroContaOrigem, numeroContaDestino, valor);
+      const resultado = await this.clienteService.transferirEntreContas(clienteId, numeroContaOrigem, numeroContaDestino, valor);
+      return {
+        statusCode: HttpStatus.OK,
+        message: 'Transferência realizada com sucesso',
+        data: resultado,
+      };
     } catch (error) {
       throw new Error('Erro ao transferir entre contas.');
     }
@@ -110,17 +139,16 @@ export class ClienteController {
     @Param('contaNumero') contaNumero: string,
     @Body('clienteId') clienteId: string,
     @Body('valor') valor: number,
-  ): Promise<boolean> {
+  ) {
     try {
-      return await this.clienteService.sacarDaConta(clienteId, contaNumero, valor);
+      const resultado = await this.clienteService.sacarDaConta(clienteId, contaNumero, valor);
+      return {
+        statusCode: HttpStatus.OK,
+        message: 'Saque realizado com sucesso',
+        data: resultado,
+      };
     } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw error;
-      }
       throw new Error('Erro ao sacar da conta.');
     }
   }
-
 }
-
-

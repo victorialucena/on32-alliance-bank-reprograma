@@ -1,7 +1,5 @@
-import { Controller, Get, Param, Post, Body, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Param, HttpStatus } from '@nestjs/common';
 import { ContaService } from 'src/services/contaService';
-import { ContaCorrente, ContaCorrenteDTO } from '../models/modelContaCorrente';
-import { ContaPoupanca, ContaPoupancaDTO } from '../models/modelContaPoupanca';
 import { ContaDTO } from 'src/models/modelConta';
 
 @Controller('contas')
@@ -9,14 +7,22 @@ export class ContaController {
   constructor(private readonly contaService: ContaService) {}
 
   @Get()
-  async getAllContas(): Promise<ContaDTO[]> {
+  async getAllContas() {
     const contas = await this.contaService.findAllContas();
-    return contas.map(conta => new ContaDTO(conta));
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Todas as contas retornadas com sucesso',
+      data: contas.map(conta => new ContaDTO(conta)),
+    };
   }
 
   @Get(':numeroConta')
-  findContaByNumero(@Param('numeroConta') numeroConta: string): ContaCorrente | ContaPoupanca | undefined {
-    return this.contaService.findContaByNumero(numeroConta);
+  findContaByNumero(@Param('numeroConta') numeroConta: string) {
+    const conta = this.contaService.findContaByNumero(numeroConta);
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Conta retornada com sucesso',
+      data: conta,
+    };
   }
-
 }
