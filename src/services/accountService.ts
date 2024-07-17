@@ -28,6 +28,7 @@ export class AccountService {
         const accountNumber = this.generateRandomAccountNumber();
         const currentAccountNumber = `CA-${accountNumber}`
         newAccount = new CurrentAccount(currentAccountNumber, initialBalance, customer);
+        newAccount.overdraftLimit = 100;
       } else {
         throw new BadRequestException('The customer does not meet the minimum requirements to open a current account.');
       }

@@ -3,18 +3,26 @@ import { Customer } from "src/models/modelCustomer";
 import { AccountDTO } from "./modelAccount";
 
 export class CurrentAccount extends Account {
-  overdraftLimit: number;
+  overdraftLimit: number = 100;
 
-  constructor(accountNumber: string, balance: number, customer: Customer) {
+  constructor(accountNumber: string, balance: number, customer: Customer, overdraftLimit: number = 100) {
     super('CURRENT', accountNumber, balance, customer);
+    this.overdraftLimit = overdraftLimit;
   }
 }
 
-export class CurrentAccountDTO extends AccountDTO {
-  overdraftLimit: number;
+export class CurrentAccountDTO {
+  id: string;
+  type: string;
+  accountNumber: string;
+  balance: number;
+  overdraftLimit: number = 100;
 
   constructor(currentAccount: CurrentAccount) {
-    super(currentAccount);
-    this.overdraftLimit = 100;
+    this.id = currentAccount.id;
+    this.type = currentAccount.type;
+    this.accountNumber = currentAccount.accountNumber;
+    this.balance = currentAccount.balance;
+    this.overdraftLimit = currentAccount.overdraftLimit;
   }
 }
