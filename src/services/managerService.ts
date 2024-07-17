@@ -116,7 +116,7 @@ export class ManagerService {
   deleteManager(managerId: string): boolean {
     const index = this.managers.findIndex(manager => manager.id === managerId);
     if (index === -1) {
-      return false; // Manager not found
+      return false; 
     }
     this.managers.splice(index, 1);
     return true;

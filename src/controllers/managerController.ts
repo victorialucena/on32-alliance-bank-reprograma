@@ -1,19 +1,21 @@
 import { Controller, Post, Body, Param, Patch, Get, Delete, NotFoundException, HttpStatus } from '@nestjs/common';
 import { ManagerService } from '../services/managerService';
 import { ManagerDTO } from '../models/modelManager';
+import { CurrentAccountDTO } from 'src/models/modelCurrentAccount';
+import { SavingsAccountDTO } from 'src/models/modelSavingsAccount';
 
-@Controller('gerentes')
+@Controller('manager')
 export class ManagerController {
-  constructor(private readonly managerService: ManagerService) { }
+  constructor(private readonly managerService: ManagerService) {}
 
-  @Post('criar')
+  @Post('createManager')
   createManager(
     @Body('name') name: string,
   ) {
     const newManager = this.managerService.createManager(name);
     return {
       statusCode: HttpStatus.CREATED,
-      message: 'Gerente criado com sucesso.',
+      message: 'Manager created successfully.',
       data: new ManagerDTO(newManager),
     };
   }
@@ -24,11 +26,11 @@ export class ManagerController {
   ) {
     const manager = this.managerService.findManagerById(managerId);
     if (!manager) {
-      throw new Error(`Gerente com ID ${managerId} não encontrado.`);
+      throw new NotFoundException(`Manager with ID ${managerId} not found.`);
     }
     return {
       statusCode: HttpStatus.OK,
-      message: 'Gerente retornado com sucesso',
+      message: 'Manager retrieved successfully.',
       data: new ManagerDTO(manager),
     };
   }
@@ -41,7 +43,7 @@ export class ManagerController {
     this.managerService.associateCustomer(managerId, body.customerId);
     return {
       statusCode: HttpStatus.OK,
-      message: `Cliente com ID ${body.customerId} associado ao gerente ${managerId} com sucesso.`,
+      message: `Customer with ID ${body.customerId} associated with manager ${managerId} successfully.`,
     };
   }
 
@@ -53,7 +55,7 @@ export class ManagerController {
     this.managerService.removeCustomer(managerId, customerId);
     return {
       statusCode: HttpStatus.OK,
-      message: `Cliente com ID ${customerId} removido do gerente ${managerId} com sucesso.`,
+      message: `Customer with ID ${customerId} removed from manager ${managerId} successfully.`,
     };
   }
 
@@ -62,7 +64,7 @@ export class ManagerController {
     const managers = await this.managerService.getAllManagers();
     return {
       statusCode: HttpStatus.OK,
-      message: 'Todos os gerentes retornados com sucesso',
+      message: 'All managers retrieved successfully.',
       data: managers.map(manager => new ManagerDTO(manager)),
     };
   }
@@ -74,7 +76,40 @@ export class ManagerController {
     this.managerService.deleteManager(managerId);
     return {
       statusCode: HttpStatus.OK,
-      message: `Gerente com ID ${managerId} removido com sucesso.`,
+      message: `Manager with ID ${managerId} deleted successfully.`,
     };
+  }
+
+  @Post(':managerId/customer/:customerId/createAccount')
+  createAccountForCustomer(
+    @Param('managerId') managerId: string,
+    @Param('customerId') customerId: string,
+    @Body() body: { type: 'CURRENT' | 'SAVINGS', interestRate?: number, balance: number },
+  ): CurrentAccountDTO | SavingsAccountDTO {
+    const { type, interestRate, balance } = body;
+    return this.managerService.createAccountForCustomer(managerId, customerId, type, interestRate, balance);
+  }
+
+  @Patch(':managerId/customer/:customerId/changeAccount')
+  changeAccountTypeForCustomer(
+    @Param('managerId') managerId: string,
+    @Param('customerId') customerId: string,
+    @Body() body: { accountNumber: string, newType: 'CURRENT' | 'SAVINGS', interestRate?: number },
+  ): CurrentAccountDTO | SavingsAccountDTO {
+    const { accountNumber, newType, interestRate } = body;
+    return this.managerService.changeAccountTypeForCustomer(managerId, customerId, accountNumber, newType, interestRate);
+  }
+
+  @Delete(':managerId/customer/:customerId/close-account/:accountNumber')
+  closeAccountForCustomer(
+    @Param('managerId') managerId: string,
+    @Param('customerId') customerId: string,
+    @Param('accountNumber') accountNumber: string
+  ): { message: string } {
+    const accountClosed = this.managerService.closeAccountForCustomer(managerId, customerId, accountNumber);
+    if (!accountClosed) {
+      throw new NotFoundException('Error closing account.');
+    }
+    return { message: 'Account closed successfully.' };
   }
 }

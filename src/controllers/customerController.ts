@@ -1,15 +1,12 @@
 import { Controller, Get, Param, Post, Body, BadRequestException, NotFoundException, Patch, Delete, ForbiddenException, Put, HttpStatus } from '@nestjs/common';
 import { CustomerService } from 'src/services/customerService';
 import { Customer, CustomerDTO } from '../models/modelCustomer';
-import { Manager } from '../models/modelManager';
-import { CurrentAccountDTO } from 'src/models/modelCurrentAccount';
-import { SavingsAccountDTO } from 'src/models/modelSavingsAccount';
 
-@Controller('clientes')
+@Controller('customer')
 export class CustomerController {
   constructor(private readonly customerService: CustomerService) { }
 
-  @Post('criar')
+  @Post('createCustomer')
   createCustomer(
     @Body('name') name: string,
     @Body('address') address: string,
@@ -20,41 +17,41 @@ export class CustomerController {
     const customer = this.customerService.createCustomer(name, address, phone, salaryIncome, managerId);
     return {
       statusCode: HttpStatus.CREATED,
-      message: 'Cliente criado com sucesso',
+      message: 'Customer created successfully',
       data: customer,
     };
   }
 
-  @Patch(':idCliente/mudar-tipo-conta/:numeroConta')
+  @Patch(':idCustomer/changeAccountType')
   changeAccountType(
-    @Param('idCliente') idCliente: string,
-    @Param('numeroConta') numeroConta: string,
+    @Param('idCustomer') idCustomer: string,
+    @Body('accountNumber') accountNumber: string,
     @Body('newType') newType: 'CURRENT' | 'SAVINGS',
     @Body('interestRate') interestRate?: number
   ) {
-    const newAccount = this.customerService.changeAccountType(idCliente, numeroConta, newType, interestRate);
+    const newAccount = this.customerService.changeAccountType(idCustomer, accountNumber, newType, interestRate);
     if (!newAccount) {
-      throw new NotFoundException('Erro ao mudar o tipo de conta.');
+      throw new NotFoundException('Error changing account type.');
     }
     return {
       statusCode: HttpStatus.OK,
-      message: 'Tipo de conta mudado com sucesso',
+      message: 'Account type changed successfully',
       data: newAccount,
     };
   }
 
-  @Delete(':idCliente/fechar-conta/:numeroConta')
+  @Delete(':idCustomer/closeAccount')
   closeAccount(
-    @Param('idCliente') idCliente: string,
-    @Param('numeroConta') numeroConta: string
+    @Param('idCustomer') idCustomer: string,
+    @Body('accountNumber') accountNumber: string
   ) {
-    const closedAccount = this.customerService.closeAccount(idCliente, numeroConta);
+    const closedAccount = this.customerService.closeAccount(idCustomer, accountNumber);
     if (!closedAccount) {
-      throw new NotFoundException('Erro ao fechar a conta.');
+      throw new NotFoundException('Error closing account.');
     }
     return {
       statusCode: HttpStatus.OK,
-      message: 'Conta fechada com sucesso',
+      message: 'Account closed successfully',
       data: null,
     };
   }
@@ -64,91 +61,91 @@ export class CustomerController {
     const customers = await this.customerService.getAllCustomers();
     return {
       statusCode: HttpStatus.OK,
-      message: 'Todos os clientes retornados com sucesso',
+      message: 'All customers retrieved successfully',
       data: customers.map(customer => new CustomerDTO(customer)),
     };
   }
 
-  @Get(':id')
-  findCustomerById(@Param('id') id: string) {
-    const customer = this.customerService.findCustomerById(id);
+  @Get(':idCustomer')
+  findCustomerById(@Param('idCustomer') idCustomer: string) {
+    const customer = this.customerService.findCustomerById(idCustomer);
     return {
       statusCode: HttpStatus.OK,
-      message: 'Cliente retornado com sucesso',
+      message: 'Customer retrieved successfully',
       data: customer,
     };
   }
 
-  @Post(':idCliente/contas/:tipo')
+  @Post(':idCustomer/createAccount')
   async openAccountForCustomer(
-    @Param('idCliente') idCliente: string,
-    @Param('tipo') tipo: 'CURRENT' | 'SAVINGS',
+    @Param('idCustomer') idCustomer: string,
     @Body('interestRate') interestRate?: number,
+    @Body('type') type?: 'CURRENT' | 'SAVINGS'
   ) {
     try {
-      const account = await this.customerService.openAccountForCustomer(idCliente, tipo, interestRate);
+      const account = await this.customerService.openAccountForCustomer(idCustomer, type, interestRate);
       return {
         statusCode: HttpStatus.CREATED,
-        message: 'Conta aberta com sucesso',
+        message: 'Account opened successfully',
         data: account,
       };
     } catch (error) {
-      throw new BadRequestException('Erro ao abrir conta.');
+      throw new BadRequestException('Error opening account.');
     }
   }
 
-  @Post(':customerId/contas/:accountNumber/depositar')
+  @Post(':customerId/account/deposit')
   async depositIntoAccount(
     @Param('customerId') customerId: string,
-    @Param('accountNumber') accountNumber: string,
+    @Body('accountNumber') accountNumber: string,
     @Body('amount') amount: number,
   ) {
     try {
       const result = await this.customerService.depositIntoAccount(customerId, accountNumber, amount);
       return {
         statusCode: HttpStatus.OK,
-        message: 'Depósito realizado com sucesso',
+        message: 'Deposit made successfully',
         data: result,
       };
     } catch (error) {
-      throw new Error('Erro ao depositar na conta.');
+      throw new BadRequestException('Error depositing into account.');
     }
   }
 
-  @Put('transferir')
+  @Put(':idCustomer/account/transfer')
   async transferBetweenAccounts(
-    @Body('customerId') customerId: string,
+    @Param('idCustomer') idCustomer: string,
     @Body('accountNumberFrom') accountNumberFrom: string,
     @Body('accountNumberTo') accountNumberTo: string,
     @Body('value') value: number,
   ) {
     try {
-      const result = await this.customerService.transferBetweenAccounts(customerId, accountNumberFrom, accountNumberTo, value);
+      const result = await this.customerService.transferBetweenAccounts(idCustomer, accountNumberFrom, accountNumberTo, value);
       return {
         statusCode: HttpStatus.OK,
-        message: 'Transferência realizada com sucesso',
+        message: 'Transfer made successfully',
         data: result,
       };
     } catch (error) {
-      throw new Error('Erro ao transferir entre contas.');
+      throw new BadRequestException('Error transferring between accounts.');
     }
   }
 
-  @Put('sacar/:accountNumber')
+  @Put(':idCustomer/account/withdraw')
   async withdrawFromAccount(
-    @Param('accountNumber') accountNumber: string,
-    @Body('customerId') customerId: string,
+    @Param('idCustomer') idCustomer: string,
+    @Body('accountNumber') accountNumber: string,
     @Body('value') value: number,
   ) {
     try {
-      const result = await this.customerService.withdrawFromAccount(customerId, accountNumber, value);
+      const result = await this.customerService.withdrawFromAccount(idCustomer, accountNumber, value);
       return {
         statusCode: HttpStatus.OK,
-        message: 'Saque realizado com sucesso',
+        message: 'Withdrawal made successfully',
         data: result,
       };
     } catch (error) {
-      throw new Error('Erro ao sacar da conta.');
+      throw new BadRequestException('Error withdrawing from account.');
     }
   }
 }
