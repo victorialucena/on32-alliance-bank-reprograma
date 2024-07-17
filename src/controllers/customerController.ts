@@ -101,10 +101,10 @@ export class CustomerController {
   async depositIntoAccount(
     @Param('customerId') customerId: string,
     @Param('accountNumber') accountNumber: string,
-    @Body('value') value: number,
+    @Body('amount') amount: number,
   ) {
     try {
-      const result = await this.customerService.depositIntoAccount(customerId, accountNumber, value);
+      const result = await this.customerService.depositIntoAccount(customerId, accountNumber, amount);
       return {
         statusCode: HttpStatus.OK,
         message: 'Depósito realizado com sucesso',
