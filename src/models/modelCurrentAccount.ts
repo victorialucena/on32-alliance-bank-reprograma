@@ -1,12 +1,13 @@
 import { Account } from "./modelAccount";
 import { Customer } from "src/models/modelCustomer";
-import { AccountDTO } from "./modelAccount";
+import { AccountType } from "src/enums/enumAccountType";
+
 
 export class CurrentAccount extends Account {
   overdraftLimit: number = 100;
 
   constructor(accountNumber: string, balance: number, customer: Customer, overdraftLimit: number = 100) {
-    super('CURRENT', accountNumber, balance, customer);
+    super(AccountType.CURRENT, accountNumber, balance, customer);
     this.overdraftLimit = overdraftLimit;
   }
 }

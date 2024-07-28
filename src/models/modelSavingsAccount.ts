@@ -1,12 +1,13 @@
 import { Account } from "./modelAccount";
 import { Customer } from "./modelCustomer";
 import { AccountDTO } from "./modelAccount";
+import { AccountType } from "src/enums/enumAccountType";
 
 export class SavingsAccount extends Account {
   interestRate: number;
 
   constructor(accountNumber: string, balance: number, customer: Customer, interestRate: number) {
-    super('SAVINGS', accountNumber, balance, customer);
+    super(AccountType.SAVINGS, accountNumber, balance, customer);
     this.interestRate = interestRate;
   }
 
