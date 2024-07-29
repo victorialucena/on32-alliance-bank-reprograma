@@ -8,7 +8,6 @@ export class PaymentService {
   constructor(
     @Inject(forwardRef(() => AccountService))
     private readonly accountService: AccountService,
-    private readonly customerService: CustomerService
   ) {}
 
   pay(amountPayment: number, paymentReference: string, accountNumber: string) {

@@ -1,5 +1,6 @@
 import { Controller, Post, Body, BadRequestException } from "@nestjs/common";
 import { PaymentService } from "src/services/payment.service";
+import { PaymentType } from "src/enums/enumPaymentType";
 
 @Controller('payment')
 export class PaymentController {
@@ -12,12 +13,14 @@ export class PaymentController {
     @Body('accountNumber') accountNumber: string,
     @Body('paymentMethod') paymentMethod: string, 
   ): string {
-    if (paymentMethod === 'PIX') {
+    if (paymentMethod === PaymentType.PIX) {
       return this.paymentService.payPix(amountPayment, paymentReference, accountNumber);
-    } else if (paymentMethod === 'BILLET') {
-      return this.paymentService.payBillet(amountPayment, paymentReference, accountNumber);
-    } else {
-      throw new BadRequestException('Método de pagamento inválido');
     }
+    
+    if (paymentMethod === PaymentType.BILLET) {
+      return this.paymentService.payBillet(amountPayment, paymentReference, accountNumber);
+    }
+    
+    throw new BadRequestException('Método de pagamento inválido');
   }
 }

@@ -1,5 +1,7 @@
-export interface PaymentType {
- type: 'PIX' | 'BILLET'
+import { PaymentType } from "src/enums/enumPaymentType"
+
+export interface Payment{
+ type: PaymentType
 
  pay(amountPayment: number, paymentReference: string ): void
 }
