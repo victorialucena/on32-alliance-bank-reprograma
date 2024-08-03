@@ -24,7 +24,7 @@ export class Customer {
   @Column()
   public phone: string;
 
-  @Column()
+  @Column('decimal')
   public salaryIncome: number;
 
   @Column()
