@@ -9,6 +9,7 @@ import { PaymentModule } from './modules/payment.module';
 import { PaymentController } from './controllers/payment.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Manager } from './entities/entiteManager';
+import { Customer } from './entities/entitieCustomer';
 
 @Module({
   imports: [TypeOrmModule.forRoot({
@@ -18,7 +19,7 @@ import { Manager } from './entities/entiteManager';
     database: 'postgres',
     username: 'postgres',
     password: '#Helo2019',
-    entities: [Manager],
+    entities: [Manager, Customer],
     synchronize: true,
   }), CustomerModule, AccountModule, ManagerModule, PaymentModule],
   controllers: [CustomerController, AccountController, ManagerController, PaymentController],
