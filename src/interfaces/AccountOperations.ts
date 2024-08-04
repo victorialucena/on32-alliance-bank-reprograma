@@ -1,4 +1,4 @@
-import { Account } from "src/models/modelAccount";
+import { Account } from "src/entities/entitieAccount";
 
 export interface AccountOperations {
   deposit(amount: number): void;

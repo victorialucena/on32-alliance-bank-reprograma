@@ -1,6 +1,6 @@
 import { Controller, Get, Param, HttpStatus, Body } from '@nestjs/common';
 import { AccountService } from 'src/services/accountService';
-import { AccountDTO } from 'src/entities/modelAccount';
+import { AccountDTO } from 'src/entities/entitieAccount';
 
 @Controller('account')
 export class AccountController {

@@ -1,9 +1,11 @@
-import { Account } from "./modelAccount";
-import { Customer } from "src/models/modelCustomer";
+import { Account } from "./entitieAccount";
+import { Customer } from "src/entities/entitieCustomer";
 import { AccountType } from "src/enums/enumAccountType";
+import { Column } from "typeorm";
 
 
 export class CurrentAccount extends Account {
+  @Column()
   overdraftLimit: number = 100;
 
   constructor(accountNumber: string, balance: number, customer: Customer, overdraftLimit: number = 100) {

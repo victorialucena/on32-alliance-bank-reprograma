@@ -1,9 +1,12 @@
-import { Account } from "./modelAccount";
-import { Customer } from "./modelCustomer";
-import { AccountDTO } from "./modelAccount";
+import { Account } from "./entitieAccount";
+import { Customer } from "./entitieCustomer";
+import { AccountDTO } from "./entitieAccount";
 import { AccountType } from "src/enums/enumAccountType";
+import { Column } from "typeorm";
 
 export class SavingsAccount extends Account {
+ 
+  @Column()
   interestRate: number;
 
   constructor(accountNumber: string, balance: number, customer: Customer, interestRate: number) {

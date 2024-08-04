@@ -1,14 +1,33 @@
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  JoinColumn,
+  OneToOne
+} from 'typeorm';
 import { v4 as uuidv4 } from "uuid";
-import { Customer } from "./modelCustomer";
-import { CustomerDTO } from "./modelCustomer";
+import { Customer } from "./entitieCustomer";
+import { CustomerDTO } from "./entitieCustomer";
 import { AccountOperations } from "src/interfaces/AccountOperations";
 import { AccountType } from "src/enums/enumAccountType";
 
+@Entity('accounts')
 export class Account implements AccountOperations {
+ 
+  @PrimaryGeneratedColumn('uuid')
   id: string;
+
+  @Column({ type: 'enum', enum: AccountType })
   type: AccountType;
+
+  @Column({ unique: true })
   accountNumber: string;
+
+  @Column()
   balance: number;
+
+  @ManyToOne(() => Customer, customer => customer.accounts, { eager: true })
   customer: Customer;
 
   constructor(type: AccountType, accountNumber: string, balance: number, customer: Customer) {

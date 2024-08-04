@@ -1,87 +1,71 @@
-import { BadRequestException, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
-import { CurrentAccount, CurrentAccountDTO } from '../models/modelCurrentAccount';
-import { SavingsAccount, SavingsAccountDTO } from '../models/modelSavingsAccount';
+import { BadRequestException, Injectable, NotFoundException, forwardRef, Inject } from '@nestjs/common';
+import { CurrentAccount, CurrentAccountDTO } from '../entities/entiteCurrentAccount';
+import { SavingsAccount, SavingsAccountDTO } from '../entities/entitieSavingsAccount';
 import { CustomerService } from './customerService';
-import { Inject } from '@nestjs/common';
-import { Account } from 'src/models/modelAccount';
-import { Customer } from 'src/models/modelCustomer';
+import { Account } from 'src/entities/entitieAccount';
+import { Customer } from 'src/entities/entitieCustomer';
+import { AccountFactory } from 'src/interfaces/IAccountFactory';
+import { AccountType } from 'src/enums/enumAccountType';
+import { AccountRepository } from 'src/repository/accountRepository';
+import { ConcreteAccountFactory } from 'src/factorys/factoryAccount';
 
 @Injectable()
 export class AccountService {
-  private accounts: (CurrentAccount | SavingsAccount)[] = [];
-
   constructor(
     @Inject(forwardRef(() => CustomerService))
     private readonly customerService: CustomerService,
-  ) {}
+    @Inject(forwardRef(() => ConcreteAccountFactory))
+    private readonly accountFactory: AccountFactory,
+    private readonly accountRepository: AccountRepository
+  ) { }
 
-  createAccount(customerId: string, type: 'CURRENT' | 'SAVINGS', interestRate?: number, initialBalance: number = 0): CurrentAccountDTO | SavingsAccountDTO {
-    const customer = this.customerService.findCustomerById(customerId);
+  async createAccount(
+    customerId: string,
+    type: AccountType,
+    initialBalance: number = 0,
+    interestRate?: number
+  ): Promise<CurrentAccountDTO | SavingsAccountDTO> {
+    const customer = await this.customerService.findCustomerById(customerId);
     if (!customer) {
       throw new NotFoundException('Customer not found.');
     }
   
-    let newAccount: CurrentAccount | SavingsAccount;
+    const accountNumber = this.generateRandomAccountNumber();
   
-    if (type === 'CURRENT') {
-      if (customer.salaryIncome >= 500) {
-        const accountNumber = this.generateRandomAccountNumber();
-        const currentAccountNumber = `CA-${accountNumber}`
-        newAccount = new CurrentAccount(currentAccountNumber, initialBalance, customer);
-        newAccount.overdraftLimit = 100;
-      } else {
-        throw new BadRequestException('The customer does not meet the minimum requirements to open a current account.');
-      }
-    } else if (type === 'SAVINGS') {
-      if (typeof interestRate !== 'number') {
-        throw new BadRequestException('Interest rate must be provided for a savings account.');
-      }
-      const accountNumber = this.generateRandomAccountNumber();
-      const savingsAccountNumber = `SA-${accountNumber}`
-      newAccount = new SavingsAccount(savingsAccountNumber, initialBalance, customer, interestRate);
-    } else {
-      throw new BadRequestException('Invalid account type.');
-    }
+    const newAccount = this.accountFactory.createAccount(
+      type,
+      accountNumber,
+      initialBalance,
+      customer,
+      { interestRate, overdraftLimit: 100 }
+    ) as CurrentAccount | SavingsAccount;
 
-    this.accounts.push(newAccount);
+  
     customer.accounts.push(newAccount);
-    this.customerService.updateCustomer(customer);
-
+    await this.customerService.updateCustomer(customer);
+    await this.accountRepository.save(newAccount);
+  
     if (newAccount instanceof CurrentAccount) {
       return new CurrentAccountDTO(newAccount);
     } else if (newAccount instanceof SavingsAccount) {
       return new SavingsAccountDTO(newAccount);
+    } else {
+      throw new Error('Unexpected account type.');
     }
   }
+  
 
-  changeAccountType(accountNumber: string, newType: 'CURRENT' | 'SAVINGS', interestRate?: number): CurrentAccountDTO | SavingsAccountDTO {
-    const accountIndex = this.accounts.findIndex(account => account.accountNumber === accountNumber);
-    if (accountIndex === -1) {
+  async closeAccount(accountNumber: string): Promise<boolean> {
+    const account = await this.findAccountByNumber(accountNumber);
+    if (!account) {
       throw new NotFoundException('Account not found.');
     }
 
-    const currentAccount = this.accounts[accountIndex];
-    const customer = currentAccount.customer;
-
-    this.accounts.splice(accountIndex, 1);
-    const customerAccountIndex = customer.accounts.findIndex(account => account.accountNumber === accountNumber);
-    customer.accounts.splice(customerAccountIndex, 1);
-    this.customerService.updateCustomer(customer);
-
-    return this.createAccount(customer.id, newType, interestRate, currentAccount.balance);
-  }
-
-  closeAccount(accountNumber: string): boolean {
-    const accountIndex = this.accounts.findIndex(account => account.accountNumber === accountNumber);
-    if (accountIndex === -1) {
-      throw new NotFoundException('Account not found.');
-    }
-    const account = this.accounts[accountIndex];
     const customer = account.customer;
     customer.accounts = customer.accounts.filter(a => a.accountNumber !== accountNumber);
-    this.customerService.updateCustomer(customer);
-    this.accounts.splice(accountIndex, 1);
-    return true;
+    await this.customerService.updateCustomer(customer);
+
+    return await this.accountRepository.delete(account.id);
   }
 
   async deposit(accountNumber: string, amount: number): Promise<void> {
@@ -95,6 +79,7 @@ export class AccountService {
     }
 
     account.balance += amount;
+    await this.accountRepository.save(account);
   }
 
   async withdraw(accountNumber: string, amount: number): Promise<boolean> {
@@ -112,7 +97,8 @@ export class AccountService {
     }
 
     account.balance -= amount;
-    return true; 
+    await this.accountRepository.save(account);
+    return true;
   }
 
   async transfer(fromAccountNumber: string, amount: number, toAccountNumber: string): Promise<boolean> {
@@ -125,24 +111,31 @@ export class AccountService {
 
     if (await this.withdraw(fromAccountNumber, amount)) {
       await this.deposit(toAccountNumber, amount);
+      await this.accountRepository.save(fromAccount);
+      await this.accountRepository.save(toAccount);
       return true;
     }
     return false;
   }
 
-  findAccountByNumber(accountNumber: string): CurrentAccount | SavingsAccount | undefined {
-    return this.accounts.find(account => account.accountNumber === accountNumber);
+  async findAccountByNumber(accountNumber: string): Promise<Account | null> {
+    const account = await this.accountRepository.findByAccountNumber(accountNumber);
+
+    if (!account) {
+      throw new NotFoundException('Account not found.');
+    }
+
+    return account;
   }
 
   async findAllAccounts(): Promise<Account[]> {
-    return this.accounts;
+    return this.accountRepository.findAll();
   }
 
   generateRandomAccountNumber(): string {
     const min = 1000;
     const max = 9999;
     const randomNumber = Math.floor(Math.random() * (max - min + 1)) + min;
-    const accountNumber = `${randomNumber}`;
-    return accountNumber;
+    return `ACC-${randomNumber}`;
   }
 }

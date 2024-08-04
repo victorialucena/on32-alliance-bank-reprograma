@@ -6,7 +6,7 @@ import {
 } from 'typeorm';
 import { v4 as uuidv4 } from "uuid";
 import { Manager } from "src/entities/entiteManager";
-import { Account, AccountDTO } from "./modelAccount";
+import { Account, AccountDTO } from './entitieAccount';
 
 @Entity('customers')
 export class Customer {
@@ -24,7 +24,7 @@ export class Customer {
   @Column()
   public phone: string;
 
-  @Column('decimal')
+  @Column()
   public salaryIncome: number;
 
   @Column()
