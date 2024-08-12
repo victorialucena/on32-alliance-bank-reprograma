@@ -82,6 +82,25 @@ export class AccountService {
     await this.accountRepository.save(account);
   }
 
+  async changeAccountType(accountNumber: string, newType: AccountType, interestRate?: number): Promise<CurrentAccountDTO | SavingsAccountDTO> {
+    const account = await this.findAccountByNumber(accountNumber);
+    if (!account) {
+      throw new NotFoundException('Account not found.');
+    }
+  
+    const customer = account.customer;
+  
+    customer.accounts = customer.accounts.filter(acc => acc.accountNumber !== accountNumber);
+    await this.customerService.updateCustomer(customer);
+  
+    await this.accountRepository.delete(account.id);
+  
+    const newAccount = await this.createAccount(customer.id, newType, interestRate, account.balance);
+  
+    return newAccount;
+  }
+  
+
   async withdraw(accountNumber: string, amount: number): Promise<boolean> {
     const account = await this.findAccountByNumber(accountNumber);
     if (!account) {

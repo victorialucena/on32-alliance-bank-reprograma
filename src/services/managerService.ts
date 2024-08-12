@@ -2,9 +2,10 @@ import { BadRequestException, Inject, Injectable, NotFoundException, forwardRef 
 import { Manager } from '../entities/entiteManager';
 import { CustomerService } from './customerService';
 import { AccountService } from './accountService';
-import { CurrentAccountDTO } from 'src/entities/modelCurrentAccount';
-import { SavingsAccountDTO } from 'src/entities/modelSavingsAccount';
 import { ManagerRepository } from 'src/repository/managerRepository';
+import { AccountType } from 'src/enums/enumAccountType';
+import { CurrentAccountDTO } from 'src/entities/entiteCurrentAccount';
+import { SavingsAccountDTO } from 'src/entities/entitieSavingsAccount';
 
 @Injectable()
 export class ManagerService {
@@ -26,101 +27,119 @@ export class ManagerService {
   async findManagerById(id: string): Promise<Manager> {
     const manager = await this.managerRepository.findById(id);
     if (!manager) {
-      throw new Error('User not found');
+      throw new Error('Manager not found');
     }
 
     return manager;
   }
 
-  // associateCustomer(managerId: string, customerId: string): void {
-  //   const manager = this.findManagerById(managerId);
-  //   if (!manager) {
-  //     throw new Error(`Manager with ID ${managerId} not found.`);
-  //   }
+  async associateCustomer(managerId: string, customerId: string): Promise<void> {
+    const manager = await this.findManagerById(managerId);
+    if (!manager) {
+      throw new Error(`Manager with ID ${managerId} not found.`);
+    }
+  
+    const customer = await this.customerService.findCustomerById(customerId);
+    if (!customer) {
+      throw new Error(`Customer with ID ${customerId} not found.`);
+    }
+  
+    customer.managerId = managerId;
+  
+    await this.customerService.updateCustomer(customer);
+  
+    manager.customers.push(customer);
+  
+    await this.managerRepository.save(manager);
+  }
+  
 
-  //   const customer = this.customerService.findCustomerById(customerId);
-  //   if (!customer) {
-  //     throw new Error(`Customer with ID ${customerId} not found.`);
-  //   }
-
-  //   customer.managerId = managerId;
-  //   manager.customers.push(customer);
-  // }
-
-  // removeCustomer(managerId: string, customerId: string): void {
-  //   const manager = this.findManagerById(managerId);
-  //   if (!manager) {
-  //     throw new Error(`Manager with ID ${managerId} not found.`);
-  //   }
-
-  //   const customerIndex = manager.customers.findIndex(customer => customer.id === customerId);
-  //   if (customerIndex === -1) {
-  //     throw new Error(`Customer with ID ${customerId} not found.`);
-  //   }
-
-  //   manager.customers[customerIndex].managerId = undefined;
-  //   manager.customers.splice(customerIndex, 1);
-  // }
+  async removeCustomer(managerId: string, customerId: string): Promise<void> {
+    const manager = await this.findManagerById(managerId);
+    if (!manager) {
+      throw new Error(`Manager with ID ${managerId} not found.`);
+    }
+  
+    const customerIndex = manager.customers.findIndex(customer => customer.id === customerId);
+    if (customerIndex === -1) {
+      throw new Error(`Customer with ID ${customerId} not found.`);
+    }
+  
+    manager.customers[customerIndex].managerId = undefined;
+  
+    await this.customerService.updateCustomer(manager.customers[customerIndex]);
+  
+    manager.customers.splice(customerIndex, 1);
+  
+    await this.managerRepository.save(manager);
+  }
+  
 
   async getAllManagers(): Promise<Manager[]> {
     return await this.managerRepository.findAll();
   }
 
-  // createAccountForCustomer(managerId: string, customerId: string, type: 'CURRENT' | 'SAVINGS', interestRate?: number, initialBalance: number = 0): CurrentAccountDTO | SavingsAccountDTO {
-  //   const manager = this.findManagerById(managerId);
-  //   if (!manager) {
-  //     throw new NotFoundException(`Manager with ID ${managerId} not found.`);
-  //   }
+  async createAccountForCustomer(managerId: string, customerId: string, type: AccountType, interestRate?: number, initialBalance: number = 0):  Promise <CurrentAccountDTO | SavingsAccountDTO>  {
+    const manager = await this.findManagerById(managerId);
+    if (!manager) {
+      throw new NotFoundException(`Manager with ID ${managerId} not found.`);
+    }
 
-  //   const customer = this.customerService.findCustomerById(customerId);
-  //   if (!customer) {
-  //     throw new NotFoundException(`Customer with ID ${customerId} not found.`);
-  //   }
+    const customer = await this.customerService.findCustomerById(customerId);
+    if (!customer) {
+      throw new NotFoundException(`Customer with ID ${customerId} not found.`);
+    }
 
-  //   if (customer.managerId !== manager.id) {
-  //     throw new BadRequestException('Manager is not authorized to create an account for this customer.');
-  //   }
+    if (customer.managerId !== manager.id) {
+      throw new BadRequestException('Manager is not authorized to create an account for this customer.');
+    }
 
-  //   return this.accountService.createAccount(customerId, type, interestRate, initialBalance);
-  // }
+    return this.accountService.createAccount(customerId, type, interestRate, initialBalance);
+  }
 
-  // changeAccountTypeForCustomer(managerId: string, customerId: string, accountNumber: string, newType: 'CURRENT' | 'SAVINGS', interestRate?: number) {
-  //   const manager = this.findManagerById(managerId);
-  //   if (!manager) {
-  //     throw new NotFoundException(`Manager with ID ${managerId} not found.`);
-  //   }
+  async changeAccountTypeForCustomer(managerId: string, customerId: string, accountNumber: string, newType: AccountType, interestRate?: number) {
+    const manager = await this.findManagerById(managerId);
+    if (!manager) {
+      throw new NotFoundException(`Manager with ID ${managerId} not found.`);
+    }
 
-  //   const customer = this.customerService.findCustomerById(customerId);
-  //   if (!customer) {
-  //     throw new NotFoundException(`Customer with ID ${customerId} not found.`);
-  //   }
+    const customer = await this.customerService.findCustomerById(customerId);
+    if (!customer) {
+      throw new NotFoundException(`Customer with ID ${customerId} not found.`);
+    }
 
-  //   if (customer.managerId !== manager.id) {
-  //     throw new BadRequestException('Manager is not authorized to change account type for this customer.');
-  //   }
+    if (customer.managerId !== manager.id) {
+      throw new BadRequestException('Manager is not authorized to change account type for this customer.');
+    }
 
-  //   return this.accountService.changeAccountType(accountNumber, newType, interestRate);
-  // }
+    return this.accountService.changeAccountType(accountNumber, newType, interestRate);
+  }
 
-  // closeAccountForCustomer(managerId: string, customerId: string, accountNumber: string) {
-  //   const manager = this.findManagerById(managerId);
-  //   if (!manager) {
-  //     throw new NotFoundException(`Manager with ID ${managerId} not found.`);
-  //   }
-
-  //   const customer = this.customerService.findCustomerById(customerId);
-  //   if (!customer) {
-  //     throw new NotFoundException(`Customer with ID ${customerId} not found.`);
-  //   }
-
-  //   if (customer.managerId !== manager.id) {
-  //     throw new BadRequestException('Manager is not authorized to close account for this customer.');
-  //   }
-
-  //   return this.accountService.closeAccount(accountNumber);
-  // }
+  async closeAccountForCustomer(managerId: string, customerId: string, accountNumber: string) {
+    const manager = await this.findManagerById(managerId);
+    if (!manager) {
+      throw new NotFoundException(`Manager with ID ${managerId} not found.`);
+    }
+  
+    const customer = await this.customerService.findCustomerById(customerId);
+    if (!customer) {
+      throw new NotFoundException(`Customer with ID ${customerId} not found.`);
+    }
+  
+    if (customer.managerId !== manager.id) {
+      throw new BadRequestException('Manager is not authorized to close account for this customer.');
+    }
+  
+    return this.accountService.closeAccount(accountNumber);
+  }
+  
 
   async deleteManager(id: string): Promise<boolean> {
-    return await this.managerRepository.delete(id);
+    const managerDelete = await this.managerRepository.delete(id)
+
+    if (!managerDelete) {
+      throw new Error('Manager not found');
+    }
+    return managerDelete;
   }
 }

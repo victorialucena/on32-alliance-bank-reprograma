@@ -1,11 +1,14 @@
 import { v4 as uuidv4 } from 'uuid';
-import { Customer } from 'src/entities/entitieCustomer';
-import { CurrentAccount } from '../entities/modelCurrentAccount';
-import { SavingsAccount } from '../entities/modelSavingsAccount';
+import { Customer, CustomerDTO } from 'src/entities/entitieCustomer';
+import { CurrentAccount, CurrentAccountDTO } from '../entities/entiteCurrentAccount';
+import { SavingsAccount, SavingsAccountDTO } from '../entities/entitieSavingsAccount';
 import { ForbiddenException, forwardRef, Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { AccountService } from './accountService';
 import { CustomerRepository } from 'src/repository/customerRepository';
 import { find } from 'rxjs';
+import { error } from 'console';
+import { AccountType } from 'src/enums/enumAccountType';
+import { Account } from 'src/entities/entitieAccount';
 
 @Injectable()
 export class CustomerService {
@@ -17,112 +20,130 @@ export class CustomerService {
     private readonly customerRepository: CustomerRepository
   ) { }
 
-  async createCustomer(name: string, address: string, phone: string, salaryIncome: number, managerId?: string): Promise <Customer> {
-    const newClient = new Customer(name, address, phone, salaryIncome, managerId);
-    this.clients.push(newClient);
-    return await this.customerRepository.save(newClient);
+
+  async createCustomer(createCustomerDto: CustomerDTO) {
+    const { name, address, phone, salaryIncome, managerId } = createCustomerDto;
+
+    const newCustomer = new Customer(name, address, phone, salaryIncome, managerId);
+    return await this.customerRepository.save(newCustomer);
   }
+
 
   async getAllCustomers(): Promise<Customer[]> {
     return this.customerRepository.findAll();
   }
 
-  async findCustomerById(id: string): Promise <Customer>  {
-    return await this.customerRepository.findById(id);
+  async findCustomerById(id: string): Promise<Customer> {
+    const customer = await this.customerRepository.findById(id);
+    if (!customer) {
+      throw new Error('Customer not found!')
+    }
+    return customer;
   }
 
-  async updateCustomer(customer: Customer): Promise <Customer> {
+  async updateCustomer(customer: Customer): Promise<Customer> {
 
     const findCustomer = await this.findCustomerById(customer.id);
 
-    if (findCustomer) {
-      return await this.customerRepository.save(findCustomer);
+    if (!findCustomer) {
+      throw new Error('Customer not found!')
     }
-    return null;
+
+    return await this.customerRepository.save(findCustomer);;
+  }
+
+  async openAccountForCustomer(
+    clientId: string,
+    type: AccountType,
+    interestRate?: number
+  ): Promise<CurrentAccountDTO | SavingsAccountDTO> {
+    const accountDTO = await this.accountService.createAccount(clientId, type, 0, interestRate);
+
+    const client = await this.findCustomerById(clientId);
+    if (client) {
+      await this.updateCustomer(client);
+    }
+
+    return accountDTO;
   }
 
 
+  async changeAccountType(clientId: string, accountNumber: string, newType: AccountType, interestRate?: number) {
+    const newAccount = await this.accountService.changeAccountType(accountNumber, newType, interestRate);
 
-  // openAccountForCustomer(clientId: string, type: 'CURRENT' | 'SAVINGS', interestRate?: number) {
-  //   const accountDTO = this.accountService.createAccount(clientId, type, interestRate);
-  //   const client = this.findCustomerById(clientId);
-  //   if (client) {
-  //     this.updateCustomer(client);
-  //   }
-  //   return accountDTO;
-  // }
+    const client = await this.findCustomerById(clientId);
+    if (client) {
+      await this.updateCustomer(client);
+    }
 
-  // changeAccountType(clientId: string, accountNumber: string, newType: 'CURRENT' | 'SAVINGS', interestRate?: number) {
-  //   const newAccount = this.accountService.changeAccountType(accountNumber, newType, interestRate);
-  //   const client = this.findCustomerById(clientId);
-  //   if (client) {
-  //     this.updateCustomer(client);
-  //   }
-  //   return newAccount;
-  // }
+    return newAccount;
+  }
 
-  // closeAccount(clientId: string, accountNumber: string): boolean {
-  //   const client = this.findCustomerById(clientId);
-  //   if (!client) {
-  //     throw new NotFoundException('Client not found.');
-  //   }
 
-  //   const account = client.accounts.find(account => account.accountNumber === accountNumber);
-  //   if (!account) {
-  //     throw new NotFoundException('Account not found for the client.');
-  //   }
+  async closeAccount(clientId: string, accountNumber: string): Promise<boolean> {
+    const client = await this.findCustomerById(clientId);
+    if (!client) {
+      throw new NotFoundException('Client not found.');
+    }
 
-  //   const accountClosed = this.accountService.closeAccount(accountNumber);
-  //   if (accountClosed) {
-  //     client.accounts = client.accounts.filter(account => account.accountNumber !== accountNumber);
-  //     this.updateCustomer(client);
-  //   }
+    const account = client.accounts.find(account => account.accountNumber === accountNumber);
+    if (!account) {
+      throw new NotFoundException('Account not found for the client.');
+    }
 
-  //   return accountClosed;
-  // }
+    const accountClosed = await this.accountService.closeAccount(accountNumber);
 
-  // findAccountByNumber(accountNumber: string): CurrentAccount | SavingsAccount | undefined {
-  //   return this.accountService.findAccountByNumber(accountNumber);
-  // }
+    if (accountClosed) {
+      client.accounts = client.accounts.filter(account => account.accountNumber !== accountNumber);
+      await this.updateCustomer(client);
+    }
 
-  // async checkAccountOwnership(clientId: string, accountNumber: string): Promise<boolean> {
-  //   const account = await this.accountService.findAccountByNumber(accountNumber);
-  //   if (!account) {
-  //     throw new NotFoundException('Account not found.');
-  //   }
-  //   return account.customer.id === clientId;
-  // }
+    return accountClosed;
+  }
 
-  // async depositIntoAccount(clientId: string, accountNumber: string, amount: number): Promise<void> {
-  //   const isOwner = await this.checkAccountOwnership(clientId, accountNumber);
-  //   if (!isOwner) {
-  //     throw new ForbiddenException('You do not have permission to perform this operation.');
-  //   }
 
-  //   await this.accountService.deposit(accountNumber, amount);
-  // }
+  async findAccountByNumber(accountNumber: string): Promise<Account> {
+    return await this.accountService.findAccountByNumber(accountNumber);
+  }
 
-  // async transferBetweenAccounts(clientId: string, fromAccountNumber: string, toAccountNumber: string, amount: number): Promise<boolean> {
-  //   const isOwnerFrom = await this.checkAccountOwnership(clientId, fromAccountNumber);
-  //   if (!isOwnerFrom) {
-  //     throw new ForbiddenException('You do not have permission to perform this operation on the source account.');
-  //   }
+  async checkAccountOwnership(clientId: string, accountNumber: string): Promise<boolean> {
+    const account = await this.accountService.findAccountByNumber(accountNumber);
+    if (!account) {
+      throw new NotFoundException('Account not found.');
+    }
+    return account.customer.id === clientId;
+  }
 
-  //   const isOwnerTo = await this.checkAccountOwnership(clientId, toAccountNumber);
-  //   if (!isOwnerTo) {
-  //     throw new ForbiddenException('You do not have permission to perform this operation on the destination account.');
-  //   }
+  async depositIntoAccount(clientId: string, accountNumber: string, amount: number): Promise<void> {
+    const isOwner = await this.checkAccountOwnership(clientId, accountNumber);
+    if (!isOwner) {
+      throw new ForbiddenException('You do not have permission to perform this operation.');
+    }
 
-  //   return this.accountService.transfer(fromAccountNumber, amount, toAccountNumber);
-  // }
+    await this.accountService.deposit(accountNumber, amount);
+  }
 
-  // async withdrawFromAccount(clientId: string, accountNumber: string, amount: number): Promise<boolean> {
-  //   const isOwner = await this.checkAccountOwnership(clientId, accountNumber);
-  //   if (!isOwner) {
-  //     throw new ForbiddenException('You do not have permission to perform this operation.');
-  //   }
+  async transferBetweenAccounts(clientId: string, fromAccountNumber: string, toAccountNumber: string, amount: number): Promise<boolean> {
+    const isOwnerFrom = await this.checkAccountOwnership(clientId, fromAccountNumber);
+    if (!isOwnerFrom) {
+      throw new ForbiddenException('You do not have permission to perform this operation on the source account.');
+    }
 
-  //   return this.accountService.withdraw(accountNumber, amount);
-  // }
+    const isOwnerTo = await this.checkAccountOwnership(clientId, toAccountNumber);
+    if (!isOwnerTo) {
+      throw new ForbiddenException('You do not have permission to perform this operation on the destination account.');
+    }
+
+    return this.accountService.transfer(fromAccountNumber, amount, toAccountNumber);
+  }
+
+  async withdrawFromAccount(clientId: string, accountNumber: string, amount: number): Promise<boolean> {
+    const isOwner = await this.checkAccountOwnership(clientId, accountNumber);
+    if (!isOwner) {
+      throw new ForbiddenException('You do not have permission to perform this operation.');
+    }
+
+    return this.accountService.withdraw(accountNumber, amount);
+  }
 
 }
