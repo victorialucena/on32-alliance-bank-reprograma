@@ -1,26 +1,25 @@
-import { Controller, Post, Body, BadRequestException } from "@nestjs/common";
-import { PaymentService } from "src/domain/services/payment.service";
-import { PaymentType } from "src/domain/enums/enumPaymentType";
+// src/application/controllers/payment.controller.ts
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { PaymentService } from 'src/domain/services/payment.service';
+import { PaymentDTO } from '../dtos/paymentDTO';
 
-@Controller('payment')
+@Controller('payments')
 export class PaymentController {
-  constructor(private readonly paymentService: PaymentService) { }
+  constructor(private readonly paymentService: PaymentService) {}
 
-  // @Post('pay')
-  // pay(
-  //   @Body('amountPayment') amountPayment: number,
-  //   @Body('paymentReference') paymentReference: string,
-  //   @Body('accountNumber') accountNumber: string,
-  //   @Body('paymentMethod') paymentMethod: string, 
-  // ): string {
-  //   if (paymentMethod === PaymentType.PIX) {
-  //     return this.paymentService.payPix(amountPayment, paymentReference, accountNumber);
-  //   }
+  @Post()
+  async createPayment(@Body() createPaymentDto: PaymentDTO) {
+    const { amountPayment, paymentReference, accountNumber, type } = createPaymentDto;
+    return await this.paymentService.pay(amountPayment, paymentReference, accountNumber, type);
+  }
 
-  //   if (paymentMethod === PaymentType.BILLET) {
-  //     return this.paymentService.payBillet(amountPayment, paymentReference, accountNumber);
-  //   }
+  @Get(':id')
+  async getPaymentById(@Param('id') id: string) {
+    return await this.paymentService.findPaymentById(id);
+  }
 
-  //   throw new BadRequestException('Método de pagamento inválido');
-  // }
+  @Get()
+  async getAllPayments() {
+    return await this.paymentService.findAllPayments();
+  }
 }

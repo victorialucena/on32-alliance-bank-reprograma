@@ -1,48 +1,79 @@
 import { Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
 import { AccountService } from './accountService';
-import { CustomerService } from './customerService';
+import { IPayment } from 'src/domain/interfaces/IPayment';
+import { PaymentType } from 'src/domain/enums/enumPaymentType';
 import { CurrentAccount } from 'src/domain/entities/entiteCurrentAccount';
+import { PaymentBillet } from '../entities/entitiePaymentBillet';
+import { PaymentPix } from '../entities/entitiePaymentPIX';
+import { Payment } from '../entities/entitiePayment';
+import { PaymentRepository } from 'src/infrastructure/repository/paymentRepository';
+import { AccountRepository } from 'src/infrastructure/repository/accountRepository';
 
 @Injectable()
 export class PaymentService {
   constructor(
     @Inject(forwardRef(() => AccountService))
-    private readonly accountService: AccountService,
-  ) { }
+    private readonly accountService: AccountRepository,
+    private readonly paymentRepository: PaymentRepository
+  ) {}
 
-  // pay(amountPayment: number, paymentReference: string, accountNumber: string) {
-  //   const account = this.accountService.findAccountByNumber(accountNumber) as CurrentAccount;
-  //   if (!account) {
-  //     throw new NotFoundException('Account not found or invalid');
-  //   }
+  private createPaymentInstance(
+    type: PaymentType,
+    amountPayment: number,
+    paymentReference: string,
+  ): IPayment {
+    switch (type) {
+      case PaymentType.PIX:
+        return new PaymentPix(amountPayment, paymentReference);
+      case PaymentType.BILLET:
+        return new PaymentBillet(amountPayment, paymentReference);
+      default:
+        throw new NotFoundException('Payment type not supported');
+    }
+  }
 
-  //   const availableFunds = account.balance + account.overdraftLimit;
+  private async processPayment(payment: IPayment, account: CurrentAccount): Promise<Payment> {
+    const availableFunds = account.balance + account.overdraftLimit;
 
-  //   if (availableFunds < amountPayment) {
-  //     throw new NotFoundException('Insufficient balance and overdraft limit.');
-  //   }
+    if (availableFunds < payment.amountPayment) {
+      throw new NotFoundException('Insufficient balance and overdraft limit.');
+    }
 
-  //   if (account.balance >= amountPayment) {
-  //     account.balance -= amountPayment;
-  //   } else {
-  //     const remainingAmount = amountPayment - account.balance;
+    if (account.balance >= payment.amountPayment) {
+      account.balance -= payment.amountPayment;
+    } else {
+      const remainingAmount = payment.amountPayment - account.balance;
+      if (remainingAmount > account.overdraftLimit) {
+        throw new NotFoundException('Insufficient balance and overdraft limit.');
+      }
+      account.balance = 0;
+      account.overdraftLimit -= remainingAmount;
+    }
 
-  //     if (remainingAmount > account.overdraftLimit) {
-  //       throw new NotFoundException('Insufficient balance and overdraft limit.');
-  //     }
+    return await this.paymentRepository.save(payment);
+  }
 
-  //     account.balance = 0;
-  //     account.overdraftLimit -= remainingAmount;
-  //   }
+  async pay(amountPayment: number, paymentReference: string, accountNumber: string, paymentType: PaymentType): Promise<Payment> {
+    const account = await this.accountService.findByAccountNumber(accountNumber) as CurrentAccount;
+    if (!account) {
+      throw new NotFoundException('Account not found or invalid');
+    }
 
-  //   return `Payment of ${amountPayment} successful`;
-  // }
+    const paymentInstance = this.createPaymentInstance(paymentType, amountPayment, paymentReference);
 
-  // payPix(amountPayment: number, paymentReference: string, accountNumber: string) {
-  //   return this.pay(amountPayment, paymentReference, accountNumber);
-  // }
+    return this.processPayment(paymentInstance, account);
+  }
 
-  // payBillet(amountPayment: number, paymentReference: string, accountNumber: string) {
-  //   return this.pay(amountPayment, paymentReference, accountNumber);
-  // }
+  async findPaymentById(id: string): Promise<Payment> {
+    const payment = await this.paymentRepository.findById(id);
+    if (!payment) {
+      throw new NotFoundException('Payment not found');
+    }
+
+    return payment;
+  }
+
+  async findAllPayments(): Promise<Payment[]> {
+    return await this.paymentRepository.findAll();
+  }
 }

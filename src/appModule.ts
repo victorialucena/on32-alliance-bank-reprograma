@@ -11,6 +11,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Manager } from './domain/entities/entiteManager';
 import { Customer } from './domain/entities/entitieCustomer';
 import { Account } from './domain/entities/entitieAccount';
+import { Payment } from './domain/entities/entitiePayment';
 
 @Module({
   imports: [TypeOrmModule.forRoot({
@@ -20,7 +21,7 @@ import { Account } from './domain/entities/entitieAccount';
     database: 'postgres',
     username: 'postgres',
     password: '#Helo2019',
-    entities: [Manager, Customer, Account],
+    entities: [Manager, Customer, Account, Payment],
     synchronize: true,
   }), CustomerModule, AccountModule, ManagerModule, PaymentModule],
   controllers: [CustomerController, AccountController, ManagerController, PaymentController],
