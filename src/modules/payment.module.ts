@@ -1,6 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common';
-import { PaymentService } from '../services/payment.service';
-import { PaymentController } from '../controllers/payment.controller';
+import { PaymentService } from '../domain/services/payment.service';
+import { PaymentController } from '../application/controllers/payment.controller';
 import { AccountModule } from './accountModule';
 import { CustomerModule } from './customerModule';
 

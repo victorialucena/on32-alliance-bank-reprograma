@@ -2,15 +2,15 @@ import { Module } from '@nestjs/common';
 import { CustomerModule } from './modules/customerModule';
 import { AccountModule } from './modules/accountModule';
 import { ManagerModule } from './modules/managerModule';
-import { CustomerController } from './controllers/customerController';
-import { AccountController } from './controllers/accountController';
-import { ManagerController } from './controllers/managerController';
+import { CustomerController } from './application/controllers/customerController';
+import { AccountController } from './application/controllers/accountController';
+import { ManagerController } from './application/controllers/managerController';
 import { PaymentModule } from './modules/payment.module';
-import { PaymentController } from './controllers/payment.controller';
+import { PaymentController } from './application/controllers/payment.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Manager } from './entities/entiteManager';
-import { Customer } from './entities/entitieCustomer';
-import { Account } from './entities/entitieAccount';
+import { Manager } from './domain/entities/entiteManager';
+import { Customer } from './domain/entities/entitieCustomer';
+import { Account } from './domain/entities/entitieAccount';
 
 @Module({
   imports: [TypeOrmModule.forRoot({

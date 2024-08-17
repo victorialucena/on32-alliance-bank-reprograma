@@ -1,11 +1,11 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { CustomerModule } from './customerModule';
 import { AccountModule } from './accountModule';
-import { ManagerService } from 'src/services/managerService';
-import { Manager } from 'src/entities/entiteManager';
-import { ManagerController } from 'src/controllers/managerController';
+import { ManagerService } from 'src/domain/services/managerService';
+import { Manager } from 'src/domain/entities/entiteManager';
+import { ManagerController } from 'src/application/controllers/managerController';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ManagerRepository } from 'src/repository/managerRepository';
+import { ManagerRepository } from 'src/infrastructure/repository/managerRepository';
 
 
 @Module({

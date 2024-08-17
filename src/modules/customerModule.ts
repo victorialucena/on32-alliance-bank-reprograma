@@ -1,9 +1,9 @@
 import { Module, forwardRef } from '@nestjs/common';
-import { CustomerService } from 'src/services/customerService';
-import { CustomerController } from 'src/controllers/customerController';
+import { CustomerService } from 'src/domain/services/customerService';
+import { CustomerController } from 'src/application/controllers/customerController';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Customer } from 'src/entities/entitieCustomer';
-import { CustomerRepository } from 'src/repository/customerRepository';
+import { Customer } from 'src/domain/entities/entitieCustomer';
+import { CustomerRepository } from 'src/infrastructure/repository/customerRepository';
 import { AccountModule } from './accountModule';
 
 @Module({
@@ -12,4 +12,4 @@ import { AccountModule } from './accountModule';
   controllers: [CustomerController],
   exports: [CustomerService, CustomerRepository],
 })
-export class CustomerModule {}
+export class CustomerModule { }
