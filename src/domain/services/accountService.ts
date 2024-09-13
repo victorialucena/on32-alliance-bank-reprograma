@@ -1,3 +1,4 @@
+import { TransactionService } from 'src/domain/services/transactionService';
 import { BadRequestException, Injectable, NotFoundException, forwardRef, Inject } from '@nestjs/common';
 import { CurrentAccount } from '../entities/entiteCurrentAccount';
 import { SavingsAccount } from '../entities/entitieSavingsAccount';
@@ -10,6 +11,8 @@ import { AccountRepository } from 'src/infrastructure/repository/accountReposito
 import { ConcreteAccountFactory } from 'src/domain/factorys/factoryAccount';
 import { CurrentAccountDTO } from 'src/application/dtos/currentAccountDTO';
 import { SavingsAccountDTO } from 'src/application/dtos/savingsAccountDTO';
+import { TransactionRepository } from 'src/infrastructure/repository/transactionRepository';
+import { Transaction } from 'src/domain/entities/entitieTransaction'; 
 
 @Injectable()
 export class AccountService {
@@ -18,7 +21,9 @@ export class AccountService {
     private readonly customerService: CustomerService,
     @Inject(forwardRef(() => ConcreteAccountFactory))
     private readonly accountFactory: IAccountFactory,
-    private readonly accountRepository: AccountRepository
+    private readonly accountRepository: AccountRepository,
+    @Inject(forwardRef(() => TransactionService))
+    private readonly transactionService: TransactionService,
   ) { }
 
   async createAccount(
@@ -42,7 +47,6 @@ export class AccountService {
       { interestRate, overdraftLimit: 100 }
     ) as CurrentAccount | SavingsAccount;
 
-
     customer.accounts.push(newAccount);
     await this.customerService.updateCustomer(customer);
     await this.accountRepository.save(newAccount);
@@ -56,7 +60,6 @@ export class AccountService {
     }
   }
 
-
   async closeAccount(accountNumber: string): Promise<boolean> {
     const account = await this.findAccountByNumber(accountNumber);
     if (!account) {
@@ -66,6 +69,7 @@ export class AccountService {
     const customer = account.customer;
     customer.accounts = customer.accounts.filter(a => a.accountNumber !== accountNumber);
     await this.customerService.updateCustomer(customer);
+
 
     return await this.accountRepository.delete(account.id);
   }
@@ -82,6 +86,13 @@ export class AccountService {
 
     account.balance += amount;
     await this.accountRepository.save(account);
+
+    await this.transactionService.createTransaction(
+      'WITHDRAWAL',  
+      +amount,      
+      account.balance, 
+      account.id      
+    );
   }
 
   async changeAccountType(accountNumber: string, newType: AccountType, interestRate?: number): Promise<CurrentAccountDTO | SavingsAccountDTO> {
@@ -119,6 +130,13 @@ export class AccountService {
 
     account.balance -= amount;
     await this.accountRepository.save(account);
+
+    await this.transactionService.createTransaction(
+      'WITHDRAWAL',  
+      -amount,      
+      account.balance, 
+      account.id      
+    );
     return true;
   }
 
@@ -132,8 +150,22 @@ export class AccountService {
 
     if (await this.withdraw(fromAccountNumber, amount)) {
       await this.deposit(toAccountNumber, amount);
-      await this.accountRepository.save(fromAccount);
-      await this.accountRepository.save(toAccount);
+
+      await this.transactionService.createTransaction(
+        'TRANSFER', 
+        -amount,    
+        fromAccount.balance, 
+        fromAccount.id      
+      );
+  
+      await this.transactionService.createTransaction(
+        'TRANSFER',  
+        amount,     
+        toAccount.balance,
+        toAccount.id      
+      );
+  
+
       return true;
     }
     return false;

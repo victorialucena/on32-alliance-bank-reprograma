@@ -4,12 +4,14 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   JoinColumn,
-  OneToOne
+  OneToOne,
+  OneToMany
 } from 'typeorm';
 import { v4 as uuidv4 } from "uuid";
 import { Customer } from "./entitieCustomer";
 import { IAccountOperations } from "src/domain/interfaces/IAccountOperations";
 import { AccountType } from "src/domain/enums/enumAccountType";
+import { Transaction } from './entitieTransaction';
 
 @Entity('accounts')
 export class Account implements IAccountOperations {
@@ -28,6 +30,9 @@ export class Account implements IAccountOperations {
 
   @ManyToOne(() => Customer, customer => customer.accounts, { eager: true })
   customer: Customer;
+
+  @OneToMany(() => Transaction, transaction => transaction.account)
+  transactions: Transaction[];
 
   constructor(type: AccountType, accountNumber: string, balance: number, customer: Customer) {
     this.id = uuidv4();

@@ -3,7 +3,7 @@ import { Customer } from "src/domain/entities/entitieCustomer";
 import { AccountDTOO } from "./accountDTO";
 
 export class CustomerDTO {
- public accounts: Account[] = [];
+ public accounts: AccountDTOO[] = [];
 
  id: string;
  name: string;

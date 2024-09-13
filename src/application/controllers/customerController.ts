@@ -98,6 +98,7 @@ export class CustomerController {
         data: result,
       };
     } catch (error) {
+
       throw new BadRequestException('Error depositing into account.');
     }
   }

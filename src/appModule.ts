@@ -12,6 +12,9 @@ import { Manager } from './domain/entities/entiteManager';
 import { Customer } from './domain/entities/entitieCustomer';
 import { Account } from './domain/entities/entitieAccount';
 import { Payment } from './domain/entities/entitiePayment';
+import { Transaction } from './domain/entities/entitieTransaction';
+import { TransactionModule } from './modules/transactionModule';
+import { TransactionController } from './application/controllers/transactionController';
 
 @Module({
   imports: [TypeOrmModule.forRoot({
@@ -21,10 +24,10 @@ import { Payment } from './domain/entities/entitiePayment';
     database: 'postgres',
     username: 'postgres',
     password: '#Helo2019',
-    entities: [Manager, Customer, Account, Payment],
+    entities: [Manager, Customer, Account, Payment, Transaction],
     synchronize: true,
-  }), CustomerModule, AccountModule, ManagerModule, PaymentModule],
-  controllers: [CustomerController, AccountController, ManagerController, PaymentController],
+  }), CustomerModule, AccountModule, ManagerModule, PaymentModule, TransactionModule],
+  controllers: [CustomerController, AccountController, ManagerController, PaymentController, TransactionController],
   providers: [],
 })
 export class AppModule { }
